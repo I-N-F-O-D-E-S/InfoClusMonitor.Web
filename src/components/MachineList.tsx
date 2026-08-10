@@ -29,11 +29,18 @@ function isMachineOnline(m: Machine): boolean {
   return false;
 }
 
+function getProgressColor(percent: number): string {
+  if (percent >= 85) return "#ef4444";
+  if (percent >= 65) return "#f59e0b";
+  return "#38bdf8";
+}
+
 export default function MachineList() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("TODOS");
   const [isLoading, setIsLoading] = useState(true);
+  const [copiedIp, setCopiedIp] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -75,7 +82,15 @@ export default function MachineList() {
     };
   }, []);
 
-  // Servidores filtrados
+  const handleCopyIp = (ip: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(ip);
+    setCopiedIp(ip);
+    setTimeout(() => setCopiedIp(null), 1800);
+  };
+
+  // Filtrado reactivo
   const filteredMachines = useMemo(() => {
     return machines.filter((m) => {
       const matchSearch =
@@ -92,14 +107,15 @@ export default function MachineList() {
       const matchStatus =
         statusFilter === "TODOS" ||
         (statusFilter === "EN LÍNEA" && online) ||
-        (statusFilter === "DESCONECTADOS" && !online);
+        (statusFilter === "OFFLINE" && !online);
 
       return matchSearch && matchStatus;
     });
   }, [machines, search, statusFilter]);
 
-  // Estadísticas agregadas
+  // Métricas agregadas
   const onlineCount = machines.filter((m) => isMachineOnline(m)).length;
+  const offlineCount = machines.length - onlineCount;
   const avgCpu = machines.length
     ? (machines.reduce((acc, m) => acc + (m.cpuPercent || 0), 0) / machines.length).toFixed(1)
     : "0";
@@ -109,35 +125,35 @@ export default function MachineList() {
 
   return (
     <div>
-      {/* Encabezado de página */}
+      {/* Encabezado Principal */}
       <div className="section-header">
         <div className="section-title">
-          <h2>Servidores y Nodos Linux</h2>
-          <p className="section-subtitle">Telemetría en tiempo real y orquestación remota de nodos</p>
+          <h2>Servidores y Nodos Cloud</h2>
+          <p className="section-subtitle">Supervisión centralizada, telemetría y ejecución remota en tiempo real</p>
         </div>
       </div>
 
-      {/* Barra de métricas generales del cluster */}
+      {/* Tarjetas de Métricas Globales del Cluster */}
       <div className="cluster-stats-bar">
         <div className="stat-box">
           <div className="stat-label">Total de Nodos</div>
           <div className="stat-value">{machines.length}</div>
         </div>
         <div className="stat-box">
-          <div className="stat-label">Activos en Línea</div>
-          <div className="stat-value" style={{ color: "#34d399" }}>{onlineCount}</div>
+          <div className="stat-label">Nodos en Línea</div>
+          <div className="stat-value" style={{ color: "#10b981" }}>{onlineCount}</div>
         </div>
         <div className="stat-box">
-          <div className="stat-label">Uso de CPU Cluster</div>
-          <div className="stat-value">{avgCpu}%</div>
+          <div className="stat-label">Carga CPU Promedio</div>
+          <div className="stat-value" style={{ color: Number(avgCpu) > 80 ? "#ef4444" : "#ffffff" }}>{avgCpu}%</div>
         </div>
         <div className="stat-box">
-          <div className="stat-label">Uso de RAM Cluster</div>
-          <div className="stat-value">{avgRam}%</div>
+          <div className="stat-label">Memoria RAM Global</div>
+          <div className="stat-value" style={{ color: Number(avgRam) > 85 ? "#ef4444" : "#ffffff" }}>{avgRam}%</div>
         </div>
       </div>
 
-      {/* Barra de herramientas y filtros */}
+      {/* Barra de Filtros y Búsqueda */}
       <div className="toolbar">
         <div className="search-input-wrapper">
           <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -147,39 +163,54 @@ export default function MachineList() {
           <input
             type="text"
             className="search-input mono"
-            placeholder="Buscar por nombre, hostname, IP pública/privada, SO o ID..."
+            placeholder="Buscar por nombre, hostname, IP, SO o ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        <div style={{ display: "flex", gap: 6 }}>
-          {(["TODOS", "EN LÍNEA", "DESCONECTADOS"] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setStatusFilter(filter)}
-              className={`btn btn-sm ${statusFilter === filter ? "btn-primary" : "btn-secondary"}`}
-            >
-              {filter}
-            </button>
-          ))}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => setStatusFilter("TODOS")}
+            className={`btn btn-sm ${statusFilter === "TODOS" ? "btn-primary" : "btn-secondary"}`}
+          >
+            Todos ({machines.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter("EN LÍNEA")}
+            className={`btn btn-sm ${statusFilter === "EN LÍNEA" ? "btn-primary" : "btn-secondary"}`}
+          >
+            <span className="pulse-dot" style={{ width: 6, height: 6 }}></span>
+            En Línea ({onlineCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter("OFFLINE")}
+            className={`btn btn-sm ${statusFilter === "OFFLINE" ? "btn-primary" : "btn-secondary"}`}
+          >
+            <span className="pulse-dot disconnected" style={{ width: 6, height: 6 }}></span>
+            Offline ({offlineCount})
+          </button>
         </div>
       </div>
 
-      {/* Estado de carga */}
+      {/* Loading State */}
       {isLoading && (
         <div style={{ textAlign: "center", padding: "64px 0" }}>
           <div className="auth-spinner" style={{ margin: "0 auto 16px" }}></div>
-          <p className="mono text-muted">Consultando nodos del cluster...</p>
+          <p className="mono text-muted">Sincronizando nodos del cluster...</p>
         </div>
       )}
 
-      {/* Estado vacío */}
+      {/* Empty State */}
       {!isLoading && filteredMachines.length === 0 && (
-        <div className="card" style={{ textAlign: "center", padding: "48px 24px" }}>
-          <div className="brand-logo" style={{ margin: "0 auto 16px", width: 48, height: 48, fontSize: 22 }}>IC</div>
-          <h3 style={{ color: "#ffffff", marginBottom: 6 }}>No se encontraron servidores</h3>
-          <p className="text-muted" style={{ maxWidth: 460, margin: "0 auto 16px" }}>
+        <div className="card" style={{ textAlign: "center", padding: "56px 24px" }}>
+          <div className="brand-icon-wrapper" style={{ margin: "0 auto 16px", width: 52, height: 52 }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+            </svg>
+          </div>
+          <h3 style={{ color: "#ffffff", marginBottom: 8, fontSize: "1.2rem" }}>No se encontraron servidores</h3>
+          <p className="text-muted" style={{ maxWidth: 480, margin: "0 auto 20px", fontSize: "0.9rem" }}>
             {search || statusFilter !== "TODOS"
               ? "No hay servidores que coincidan con los filtros de búsqueda aplicados."
               : "Ejecuta el instalador del agente en cualquier servidor Linux para conectarlo automáticamente al cluster."}
@@ -192,17 +223,17 @@ export default function MachineList() {
         </div>
       )}
 
-      {/* LISTADO EN FORMATO TABLA (LIST VIEW) */}
+      {/* TABLA DE SERVIDORES (HIGH-DENSITY LIST VIEW) */}
       {!isLoading && filteredMachines.length > 0 && (
         <div className="table-container">
           <table className="data-table">
             <thead>
               <tr>
                 <th>ESTADO</th>
-                <th>NOMBRE / HOSTNAME</th>
+                <th>SERVIDOR / NODO</th>
                 <th>IP PÚBLICA</th>
                 <th>IP PRIVADA</th>
-                <th>SISTEMA</th>
+                <th>SISTEMA OPERATIVO</th>
                 <th>CPU</th>
                 <th>RAM</th>
                 <th>DISCO</th>
@@ -222,7 +253,7 @@ export default function MachineList() {
                     {/* Estado */}
                     <td>
                       <span className={`badge ${online ? "badge-online" : "badge-offline"}`}>
-                        <span className={`pulse-dot ${online ? "" : "disconnected"}`} style={{ width: 6, height: 6 }}></span>
+                        <span className={`pulse-dot ${online ? "" : "disconnected"}`}></span>
                         {online ? "EN LÍNEA" : "OFFLINE"}
                       </span>
                     </td>
@@ -234,7 +265,7 @@ export default function MachineList() {
                           {m.name || m.hostname}
                         </div>
                         {m.name && m.name !== m.hostname && (
-                          <div className="mono text-muted" style={{ fontSize: "0.75rem" }}>
+                          <div className="mono text-muted" style={{ fontSize: "0.75rem", marginTop: 2 }}>
                             {m.hostname}
                           </div>
                         )}
@@ -243,15 +274,45 @@ export default function MachineList() {
 
                     {/* IP Pública */}
                     <td>
-                      <span className="mono" style={{ color: "#38bdf8", fontSize: "0.85rem", fontWeight: 500 }}>
-                        {publicIp}
+                      <span
+                        className="mono"
+                        onClick={(e) => handleCopyIp(publicIp, e)}
+                        title="Clic para copiar IP pública"
+                        style={{
+                          color: "#38bdf8",
+                          fontSize: "0.85rem",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}
+                      >
+                        <span>{publicIp}</span>
+                        <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 4px" }}>
+                          {copiedIp === publicIp ? "✓" : "COPY"}
+                        </span>
                       </span>
                     </td>
 
                     {/* IP Privada */}
                     <td>
-                      <span className="mono text-muted" style={{ fontSize: "0.85rem" }}>
-                        {privateIp}
+                      <span
+                        className="mono text-muted"
+                        onClick={(e) => handleCopyIp(privateIp, e)}
+                        title="Clic para copiar IP privada"
+                        style={{
+                          fontSize: "0.85rem",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}
+                      >
+                        <span>{privateIp}</span>
+                        <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 4px" }}>
+                          {copiedIp === privateIp ? "✓" : "COPY"}
+                        </span>
                       </span>
                     </td>
 
@@ -262,10 +323,10 @@ export default function MachineList() {
                       </span>
                     </td>
 
-                    {/* CPU */}
+                    {/* CPU Meter */}
                     <td>
                       <div className="mini-bar-wrapper">
-                        <span className="mono" style={{ fontSize: "0.8rem", width: 42 }}>
+                        <span className="mono" style={{ fontSize: "0.8rem", width: 44, fontWeight: 600 }}>
                           {m.cpuPercent?.toFixed(1) || 0}%
                         </span>
                         <div className="mini-bar-bg">
@@ -273,17 +334,17 @@ export default function MachineList() {
                             className="mini-bar-fill"
                             style={{
                               width: `${Math.min(100, Math.max(0, m.cpuPercent || 0))}%`,
-                              background: (m.cpuPercent || 0) > 85 ? "#ef4444" : "#ffffff",
+                              background: getProgressColor(m.cpuPercent || 0),
                             }}
                           ></div>
                         </div>
                       </div>
                     </td>
 
-                    {/* RAM */}
+                    {/* RAM Meter */}
                     <td>
                       <div className="mini-bar-wrapper">
-                        <span className="mono" style={{ fontSize: "0.8rem", width: 42 }}>
+                        <span className="mono" style={{ fontSize: "0.8rem", width: 44, fontWeight: 600 }}>
                           {m.memoryPercent?.toFixed(1) || 0}%
                         </span>
                         <div className="mini-bar-bg">
@@ -291,17 +352,17 @@ export default function MachineList() {
                             className="mini-bar-fill"
                             style={{
                               width: `${Math.min(100, Math.max(0, m.memoryPercent || 0))}%`,
-                              background: (m.memoryPercent || 0) > 85 ? "#ef4444" : "#ffffff",
+                              background: getProgressColor(m.memoryPercent || 0),
                             }}
                           ></div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Disco */}
+                    {/* Disco Meter */}
                     <td>
                       <div className="mini-bar-wrapper">
-                        <span className="mono" style={{ fontSize: "0.8rem", width: 42 }}>
+                        <span className="mono" style={{ fontSize: "0.8rem", width: 44, fontWeight: 600 }}>
                           {m.diskPercent?.toFixed(1) || 0}%
                         </span>
                         <div className="mini-bar-bg">
@@ -309,7 +370,7 @@ export default function MachineList() {
                             className="mini-bar-fill"
                             style={{
                               width: `${Math.min(100, Math.max(0, m.diskPercent || 0))}%`,
-                              background: (m.diskPercent || 0) > 90 ? "#ef4444" : "#ffffff",
+                              background: getProgressColor(m.diskPercent || 0),
                             }}
                           ></div>
                         </div>
@@ -325,8 +386,13 @@ export default function MachineList() {
 
                     {/* Acciones */}
                     <td style={{ textAlign: "right" }}>
-                      <Link to={`/machines/${targetId}`} className="btn btn-secondary btn-sm" style={{ padding: "4px 10px", fontSize: "11px" }}>
-                        Terminal &gt;
+                      <Link
+                        to={`/machines/${targetId}`}
+                        className="btn btn-secondary btn-sm"
+                        style={{ padding: "5px 12px", fontSize: "12px", gap: 4 }}
+                      >
+                        <span>Terminal</span>
+                        <span>&gt;</span>
                       </Link>
                     </td>
                   </tr>

@@ -32,7 +32,7 @@ export const Login = () => {
       });
       navigate(from, { replace: true });
     } catch (err: any) {
-      const message = err.response?.data?.message || "Credenciales inválidas. Por favor verifica e intenta nuevamente.";
+      const message = err.response?.data?.message || "Credenciales inválidas. Verifica los datos e intenta nuevamente.";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -43,9 +43,13 @@ export const Login = () => {
     <div className="auth-page">
       <div className="auth-box">
         <div className="auth-header">
-          <div className="auth-logo">IC</div>
+          <div className="auth-logo-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+            </svg>
+          </div>
           <h1 className="auth-title">InfodesCluster</h1>
-          <p className="auth-subtitle">Inicia sesión en tu panel de control de servidores</p>
+          <p className="auth-subtitle">Acceso seguro a la consola de control de servidores</p>
         </div>
 
         {error && (
@@ -70,7 +74,7 @@ export const Login = () => {
               id="usernameOrEmail"
               type="text"
               className="form-input mono"
-              placeholder="Ingresa tu usuario o correo"
+              placeholder="Ingresa tu usuario"
               value={usernameOrEmail}
               onChange={(e) => setUsernameOrEmail(e.target.value)}
               disabled={isSubmitting}
@@ -108,7 +112,7 @@ export const Login = () => {
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ width: "100%", padding: "12px", marginTop: "12px" }}
+            style={{ width: "100%", padding: "12px", marginTop: "10px", fontSize: "0.95rem" }}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -121,6 +125,13 @@ export const Login = () => {
             )}
           </button>
         </form>
+
+        <div className="auth-security-footer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Conexión Segura TLS 1.3 · Encriptación JWT 256-bit</span>
+        </div>
       </div>
     </div>
   );

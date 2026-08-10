@@ -5,18 +5,34 @@ import { signalRService } from "../services/signalr";
 import type { Machine, Command } from "../types";
 import { MachineStatus, CommandStatus } from "../types";
 
-const QUICK_COMMANDS = [
-  { label: "uptime", cmd: "uptime" },
-  { label: "df -h", cmd: "df -h" },
-  { label: "free -m", cmd: "free -m" },
-  { label: "docker ps", cmd: "docker ps" },
-  { label: "uname -a", cmd: "uname -a" },
-  { label: "📦 Crear Backup", cmd: "tar -czvf /backup-$(date +%F).tar.gz /var/www /etc" },
-  { label: "📂 Listar Backups", cmd: "ls -lh /backup* /var/backups" },
-  { label: "📊 Tamaño Backups", cmd: "du -sh /var/backups /backup*" },
-  { label: "🗄️ Backup MySQL", cmd: "mysqldump -u root -p --all-databases > /backup-db.sql" },
-  { label: "ps CPU Top 10", cmd: "ps aux --sort=-%cpu | head -n 10" },
-  { label: "netstat", cmd: "netstat -tuln" },
+interface CommandItem {
+  label: string;
+  cmd: string;
+  category: "general" | "backup" | "docker" | "diag";
+}
+
+const COMMAND_PRESETS: CommandItem[] = [
+  // Generales
+  { label: "uptime", cmd: "uptime", category: "general" },
+  { label: "df -h (Disco)", cmd: "df -h", category: "general" },
+  { label: "free -m (RAM)", cmd: "free -m", category: "general" },
+  { label: "uname -a", cmd: "uname -a", category: "general" },
+  
+  // Backups
+  { label: "📦 Crear Backup /var/www", cmd: "tar -czvf /backup-$(date +%F).tar.gz /var/www /etc", category: "backup" },
+  { label: "📂 Listar Backups", cmd: "ls -lh /backup* /var/backups 2>/dev/null || ls -lh /", category: "backup" },
+  { label: "📊 Tamaño Backups", cmd: "du -sh /var/backups /backup* 2>/dev/null", category: "backup" },
+  { label: "🗄️ Backup MySQL Full", cmd: "mysqldump -u root -p --all-databases > /backup-db.sql", category: "backup" },
+
+  // Docker & Servicios
+  { label: "docker ps", cmd: "docker ps", category: "docker" },
+  { label: "docker stats --no-stream", cmd: "docker stats --no-stream", category: "docker" },
+  { label: "systemctl failed", cmd: "systemctl --failed", category: "docker" },
+
+  // Diagnóstico
+  { label: "Top 10 CPU", cmd: "ps aux --sort=-%cpu | head -n 10", category: "diag" },
+  { label: "Top 10 RAM", cmd: "ps aux --sort=-%mem | head -n 10", category: "diag" },
+  { label: "Puertos en escucha", cmd: "netstat -tuln 2>/dev/null || ss -tuln", category: "diag" },
 ];
 
 const statusLabels: Record<string, string> = {
@@ -51,6 +67,12 @@ function isMachineOnline(m: Machine): boolean {
   return false;
 }
 
+function getMetricColor(percent: number): string {
+  if (percent >= 85) return "#ef4444";
+  if (percent >= 65) return "#f59e0b";
+  return "#38bdf8";
+}
+
 export default function MachineDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -61,11 +83,12 @@ export default function MachineDetail() {
   const [sending, setSending] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<"all" | "general" | "backup" | "docker" | "diag">("all");
 
-  // Estados para el editor de comandos
+  // Editor multilínea
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Estados para renombrar
+  // Renombrado
   const [isEditingName, setIsEditingName] = useState(false);
   const [customName, setCustomName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
@@ -73,7 +96,6 @@ export default function MachineDetail() {
   useEffect(() => {
     if (!id) return;
 
-    // Cargar datos de la máquina y comandos anteriores
     getMachine(id)
       .then((m) => {
         setMachine(m);
@@ -214,6 +236,10 @@ export default function MachineDetail() {
   const publicIp = machine.publicIpAddress || machine.ipAddress || "N/A";
   const privateIp = machine.privateIpAddress || machine.ipAddress || "127.0.0.1";
 
+  const visiblePresets = activeCategory === "all"
+    ? COMMAND_PRESETS
+    : COMMAND_PRESETS.filter((c) => c.category === activeCategory);
+
   return (
     <div>
       {/* Breadcrumb de navegación */}
@@ -223,30 +249,30 @@ export default function MachineDetail() {
         <span style={{ color: "#ffffff" }}>{machine.name || machine.hostname}</span>
       </div>
 
-      {/* Encabezado superior con edición de nombre */}
+      {/* Encabezado Superior */}
       <div className="section-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           {!isEditingName ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <h2>{machine.name || machine.hostname}</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <h2 style={{ fontSize: "1.6rem", fontWeight: 700 }}>{machine.name || machine.hostname}</h2>
               <button
                 onClick={() => {
                   setCustomName(machine.name || machine.hostname);
                   setIsEditingName(true);
                 }}
                 className="btn btn-secondary btn-sm"
-                style={{ padding: "4px 8px", fontSize: "11px" }}
+                style={{ padding: "3px 8px", fontSize: "11px" }}
                 title="Cambiar nombre del servidor"
               >
                 ✏️ Renombrar
               </button>
             </div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
                 type="text"
                 className="search-input mono"
-                style={{ height: 36, padding: "4px 10px", fontSize: "0.95rem" }}
+                style={{ height: 38, padding: "4px 12px", fontSize: "0.95rem" }}
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 autoFocus
@@ -272,7 +298,7 @@ export default function MachineDetail() {
           )}
 
           <span className={`badge ${isOnline ? "badge-online" : "badge-offline"}`}>
-            <span className={`pulse-dot ${isOnline ? "" : "disconnected"}`} style={{ width: 6, height: 6 }}></span>
+            <span className={`pulse-dot ${isOnline ? "" : "disconnected"}`}></span>
             {isOnline ? "EN LÍNEA" : "DESCONECTADO"}
           </span>
           <span className="badge badge-mono">{machine.os || "Linux"}</span>
@@ -299,19 +325,19 @@ export default function MachineDetail() {
             {refreshing ? "Solicitando..." : "Actualizar"}
           </button>
           <button onClick={() => setShowDelete(!showDelete)} className="btn btn-danger btn-sm">
-            Eliminar Servidor
+            Eliminar Nodo
           </button>
         </div>
       </div>
 
-      {/* Caja de confirmación de eliminación */}
+      {/* Caja de Confirmación de Eliminación */}
       {showDelete && (
         <div className="card" style={{ borderColor: "#ef4444", marginBottom: 24, background: "#1c1013" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
             <div>
-              <h4 style={{ color: "#f87171" }}>¿Eliminar este servidor?</h4>
+              <h4 style={{ color: "#f87171" }}>¿Eliminar este servidor del cluster?</h4>
               <p className="text-muted" style={{ fontSize: "0.85rem", marginTop: 2 }}>
-                Esto eliminará a <strong>{machine.hostname}</strong> del registro de InfodesCluster.
+                Esto eliminará a <strong>{machine.hostname}</strong> de la consola de control.
               </p>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -322,12 +348,12 @@ export default function MachineDetail() {
         </div>
       )}
 
-      {/* Especificaciones de Hardware y Red (IP Pública y Privada) */}
+      {/* Especificaciones de Red y Hardware */}
       <div className="card" style={{ marginBottom: 24 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 18 }}>
           <div>
             <div className="stat-label">HOSTNAME NATIVO</div>
-            <div className="mono" style={{ fontSize: "0.85rem", color: "#ffffff", marginTop: 4 }}>
+            <div className="mono" style={{ fontSize: "0.9rem", color: "#ffffff", marginTop: 4, fontWeight: 600 }}>
               {machine.hostname}
             </div>
           </div>
@@ -336,35 +362,35 @@ export default function MachineDetail() {
             <div className="stat-label">IP PÚBLICA (INTERNET)</div>
             <div
               className="mono"
-              style={{ fontSize: "0.9rem", fontWeight: 600, color: "#38bdf8", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
+              style={{ fontSize: "0.95rem", fontWeight: 600, color: "#38bdf8", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
               onClick={() => handleCopy(publicIp, "pubIp")}
               title="Clic para copiar IP pública"
             >
               <span>{publicIp}</span>
-              <span className="badge badge-mono" style={{ fontSize: "9px" }}>
-                {copiedText === "pubIp" ? "COPIADO" : "COPIAR"}
+              <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 5px" }}>
+                {copiedText === "pubIp" ? "✓ COPIADO" : "COPY"}
               </span>
             </div>
           </div>
 
           <div>
-            <div className="stat-label">IP PRIVADA (LAN / LOCAL)</div>
+            <div className="stat-label">IP PRIVADA (LAN)</div>
             <div
               className="mono"
-              style={{ fontSize: "0.9rem", fontWeight: 600, color: "#a1a1aa", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
+              style={{ fontSize: "0.95rem", fontWeight: 600, color: "#a1a1aa", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
               onClick={() => handleCopy(privateIp, "privIp")}
               title="Clic para copiar IP privada"
             >
               <span>{privateIp}</span>
-              <span className="badge badge-mono" style={{ fontSize: "9px" }}>
-                {copiedText === "privIp" ? "COPIADO" : "COPIAR"}
+              <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 5px" }}>
+                {copiedText === "privIp" ? "✓ COPIADO" : "COPY"}
               </span>
             </div>
           </div>
 
           <div>
             <div className="stat-label">TIEMPO ACTIVO (UPTIME)</div>
-            <div className="mono" style={{ fontSize: "0.9rem", color: "#ffffff", marginTop: 4 }}>
+            <div className="mono" style={{ fontSize: "0.95rem", color: "#ffffff", marginTop: 4, fontWeight: 600 }}>
               {formatUptime(machine.uptime)}
             </div>
           </div>
@@ -373,63 +399,69 @@ export default function MachineDetail() {
             <div className="stat-label">EXTERNAL MACHINE ID</div>
             <div
               className="mono"
-              style={{ fontSize: "0.75rem", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
+              style={{ fontSize: "0.8rem", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
               onClick={() => handleCopy(displayMachineId, "id")}
-              title="Clic para copiar"
+              title="Clic para copiar ID"
             >
               <span>{displayMachineId.length > 16 ? `${displayMachineId.substring(0, 14)}...` : displayMachineId}</span>
-              <span className="badge badge-mono" style={{ fontSize: "8px" }}>
-                {copiedText === "id" ? "COPIADO" : "COPIAR"}
+              <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 5px" }}>
+                {copiedText === "id" ? "✓ COPIADO" : "COPY"}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Medidores de Telemetría en Tiempo Real */}
+        {/* Medidores de Recursos en Tiempo Real */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 24 }}>
-          <div className="card" style={{ background: "#0c0c10", padding: "16px" }}>
+          <div className="card" style={{ background: "#0c0c12", padding: "18px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span className="stat-label">USO DE CPU</span>
-              <span className="mono" style={{ fontSize: "1.2rem", fontWeight: 700 }}>{machine.cpuPercent?.toFixed(1) || 0}%</span>
+              <span className="mono" style={{ fontSize: "1.3rem", fontWeight: 700, color: getMetricColor(machine.cpuPercent || 0) }}>
+                {machine.cpuPercent?.toFixed(1) || 0}%
+              </span>
             </div>
-            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6 }}>
+            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6, background: "#1e1e2c" }}>
               <div
                 className="metric-bar-fill"
                 style={{
                   width: `${Math.min(100, Math.max(0, machine.cpuPercent || 0))}%`,
-                  background: (machine.cpuPercent || 0) > 85 ? "#ef4444" : "#ffffff",
+                  background: getMetricColor(machine.cpuPercent || 0),
                 }}
               ></div>
             </div>
           </div>
 
-          <div className="card" style={{ background: "#0c0c10", padding: "16px" }}>
+          <div className="card" style={{ background: "#0c0c12", padding: "18px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="stat-label">USO DE MEMORIA RAM</span>
-              <span className="mono" style={{ fontSize: "1.2rem", fontWeight: 700 }}>{machine.memoryPercent?.toFixed(1) || 0}%</span>
+              <span className="stat-label">MEMORIA RAM</span>
+              <span className="mono" style={{ fontSize: "1.3rem", fontWeight: 700, color: getMetricColor(machine.memoryPercent || 0) }}>
+                {machine.memoryPercent?.toFixed(1) || 0}%
+              </span>
             </div>
-            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6 }}>
+            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6, background: "#1e1e2c" }}>
               <div
                 className="metric-bar-fill"
                 style={{
                   width: `${Math.min(100, Math.max(0, machine.memoryPercent || 0))}%`,
-                  background: (machine.memoryPercent || 0) > 85 ? "#ef4444" : "#ffffff",
+                  background: getMetricColor(machine.memoryPercent || 0),
                 }}
               ></div>
             </div>
           </div>
 
-          <div className="card" style={{ background: "#0c0c10", padding: "16px" }}>
+          <div className="card" style={{ background: "#0c0c12", padding: "18px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="stat-label">CAPACIDAD DE DISCO</span>
-              <span className="mono" style={{ fontSize: "1.2rem", fontWeight: 700 }}>{machine.diskPercent?.toFixed(1) || 0}%</span>
+              <span className="stat-label">DISCO PRINCIPAL</span>
+              <span className="mono" style={{ fontSize: "1.3rem", fontWeight: 700, color: getMetricColor(machine.diskPercent || 0) }}>
+                {machine.diskPercent?.toFixed(1) || 0}%
+              </span>
             </div>
-            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6 }}>
+            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6, background: "#1e1e2c" }}>
               <div
                 className="metric-bar-fill"
                 style={{
                   width: `${Math.min(100, Math.max(0, machine.diskPercent || 0))}%`,
-                  background: (machine.diskPercent || 0) > 90 ? "#ef4444" : "#ffffff",
+                  background: getMetricColor(machine.diskPercent || 0),
                 }}
               ></div>
             </div>
@@ -437,7 +469,7 @@ export default function MachineDetail() {
         </div>
       </div>
 
-      {/* Terminal Web Linux & Ejecución Remota de Comandos */}
+      {/* Terminal Web & Ejecución Remota */}
       <div className="terminal-card">
         <div className="terminal-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -446,16 +478,16 @@ export default function MachineDetail() {
               <div className="terminal-dot"></div>
               <div className="terminal-dot"></div>
             </div>
-            <span className="mono" style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+            <span className="mono" style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
               bash — {machine.name || machine.hostname} (IP: {publicIp})
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              style={{ padding: "2px 8px", fontSize: "11px" }}
+              style={{ padding: "3px 10px", fontSize: "11px" }}
               onClick={() => setIsExpanded(!isExpanded)}
               title={isExpanded ? "Cambiar a modo una línea" : "Expandir a editor multilínea"}
             >
@@ -466,10 +498,27 @@ export default function MachineDetail() {
         </div>
 
         <div className="terminal-body">
-          {/* Comandos rápidos sugeridos y copias de seguridad */}
-          <div className="stat-label" style={{ marginBottom: 6 }}>Comandos sugeridos y Copias de Seguridad:</div>
-          <div className="command-chips">
-            {QUICK_COMMANDS.map((item) => (
+          {/* Selector de Categorías de Comandos */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+            <div className="stat-label">Comandos sugeridos y automatizaciones:</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["all", "general", "backup", "docker", "diag"] as const).map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCategory(cat)}
+                  className={`btn btn-sm ${activeCategory === cat ? "btn-primary" : "btn-secondary"}`}
+                  style={{ padding: "2px 8px", fontSize: "10px", textTransform: "capitalize" }}
+                >
+                  {cat === "all" ? "Todos" : cat === "backup" ? "Backups" : cat === "docker" ? "Docker" : cat === "diag" ? "Diagnóstico" : "Básicos"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chips de Comandos */}
+          <div className="command-chips" style={{ marginTop: 6 }}>
+            {visiblePresets.map((item) => (
               <button
                 key={item.label}
                 type="button"
@@ -481,7 +530,7 @@ export default function MachineDetail() {
             ))}
           </div>
 
-          {/* Prompt de entrada de comandos (Modo Normal o Modo Multilínea Expandido) */}
+          {/* Entrada de Comandos */}
           {!isExpanded ? (
             <div className="terminal-input-wrapper">
               <span className="terminal-prompt">$</span>
@@ -506,7 +555,7 @@ export default function MachineDetail() {
                     onClick={handleClearCommand}
                     className="btn btn-secondary btn-sm"
                     style={{ padding: "4px 8px", fontSize: "11px" }}
-                    title="Limpiar comando escrito"
+                    title="Limpiar comando"
                   >
                     🧹 Limpiar
                   </button>
@@ -576,16 +625,16 @@ export default function MachineDetail() {
       </div>
 
       {/* Historial de Ejecución */}
-      <div style={{ marginTop: 24 }}>
-        <div className="section-header" style={{ marginBottom: 12 }}>
+      <div style={{ marginTop: 28 }}>
+        <div className="section-header" style={{ marginBottom: 14 }}>
           <div className="section-title">
-            <h3 style={{ fontSize: "1.15rem" }}>Historial y Actividad de Comandos ({commands.length})</h3>
-            <p className="section-subtitle">Flujo de comandos ejecutados y resultados en tiempo real</p>
+            <h3 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Historial de Ejecución ({commands.length})</h3>
+            <p className="section-subtitle">Flujo de comandos ejecutados y resultados capturados en tiempo real</p>
           </div>
         </div>
 
         {commands.length === 0 && (
-          <div className="card" style={{ textAlign: "center", padding: "32px 16px" }}>
+          <div className="card" style={{ textAlign: "center", padding: "36px 16px" }}>
             <p className="mono text-muted">Aún no se han ejecutado comandos en este servidor.</p>
           </div>
         )}
@@ -599,15 +648,15 @@ export default function MachineDetail() {
             <div key={cmd.id} className="command-history-item">
               <div className="command-history-top">
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <span className="mono" style={{ fontWeight: 600, color: "#ffffff" }}>
+                  <span className="mono" style={{ fontWeight: 600, color: "#ffffff", fontSize: "0.85rem" }}>
                     $ {cmd.parameters}
                   </span>
                   <span
                     className="badge"
                     style={{
-                      backgroundColor: isCompleted ? "#12281c" : isFailed ? "#261114" : isRunning ? "#281e0e" : "#1c1c24",
+                      backgroundColor: isCompleted ? "rgba(16, 185, 129, 0.12)" : isFailed ? "rgba(239, 68, 68, 0.12)" : isRunning ? "rgba(245, 158, 11, 0.12)" : "#181822",
                       color: isCompleted ? "#34d399" : isFailed ? "#f87171" : isRunning ? "#fbbf24" : "#a1a1aa",
-                      border: `1px solid ${isCompleted ? "#1c4530" : isFailed ? "#4c1d24" : isRunning ? "#523c14" : "#2e2e38"}`,
+                      border: `1px solid ${isCompleted ? "rgba(16, 185, 129, 0.25)" : isFailed ? "rgba(239, 68, 68, 0.25)" : isRunning ? "rgba(245, 158, 11, 0.25)" : "#272738"}`,
                     }}
                   >
                     {statusLabels[cmd.status] || cmd.status}
@@ -615,14 +664,16 @@ export default function MachineDetail() {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span className="mono text-muted">{new Date(cmd.createdAt).toLocaleTimeString()}</span>
+                  <span className="mono text-muted" style={{ fontSize: "0.75rem" }}>
+                    {new Date(cmd.createdAt).toLocaleTimeString()}
+                  </span>
                   {cmd.result && (
                     <button
                       onClick={() => handleCopy(cmd.result, String(cmd.id))}
                       className="btn btn-secondary btn-sm"
                       style={{ padding: "2px 8px", fontSize: "10px" }}
                     >
-                      {copiedText === String(cmd.id) ? "Copiado" : "Copiar Salida"}
+                      {copiedText === String(cmd.id) ? "✓ Copiado" : "Copiar Salida"}
                     </button>
                   )}
                 </div>
