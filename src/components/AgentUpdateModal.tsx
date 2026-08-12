@@ -103,14 +103,14 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content transfer-modal" style={{ maxWidth: "680px" }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "22px" }}>⚡</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <img src="/logo_simple.png" alt="BuhoControl Logo" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
             <div>
               <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#f8fafc" }}>
-                Instalación y Actualización de Agente
+                BuhoControl — Instalador y Actualizador de Agente
               </h3>
               <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>
-                Carga de archivos a MinIO y generación de comando bash 1-click
+                Carga de archivos a MinIO y generación de comando bash 1-click para Linux
               </p>
             </div>
           </div>

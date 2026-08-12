@@ -41,15 +41,25 @@ export const Login = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-box">
-        <div className="auth-header">
-          <div className="auth-logo-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-            </svg>
+      <div className="auth-box" style={{ maxWidth: "440px" }}>
+        <div className="auth-header" style={{ textAlign: "center", marginBottom: "24px" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>
+            <img
+              src="/logo_completo.png"
+              alt="BuhoControl - Sistema de Gestión y Control Linux"
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                maxHeight: "140px",
+                objectFit: "contain",
+                borderRadius: "8px",
+                filter: "drop-shadow(0 0 16px rgba(56, 189, 248, 0.25))"
+              }}
+            />
           </div>
-          <h1 className="auth-title">InfodesCluster</h1>
-          <p className="auth-subtitle">Acceso seguro a la consola de control de servidores</p>
+          <p className="auth-subtitle" style={{ fontSize: "13px", color: "#94a3b8" }}>
+            Acceso seguro a la consola de gestión de servidores Linux
+          </p>
         </div>
 
         {error && (

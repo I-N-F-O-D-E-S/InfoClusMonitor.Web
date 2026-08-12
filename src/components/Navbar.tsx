@@ -30,15 +30,17 @@ export const Navbar = () => {
       <div className="navbar-inner">
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <Link to="/" className="navbar-brand">
-            <div className="brand-icon-wrapper">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-              </svg>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span className="brand-name">InfodesCluster</span>
-                <span className="brand-tag">ENTERPRISE</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <img
+                src="/logo_simple.png"
+                alt="BuhoControl Logo"
+                style={{ width: "36px", height: "36px", objectFit: "contain", filter: "drop-shadow(0 0 8px rgba(56, 189, 248, 0.4))" }}
+              />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="brand-name" style={{ letterSpacing: "-0.5px", fontWeight: 800 }}>BuhoControl</span>
+                  <span className="brand-tag">LINUX</span>
+                </div>
               </div>
             </div>
           </Link>
