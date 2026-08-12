@@ -8,7 +8,9 @@ import type {
   User,
   DirectoryContent,
   FileTransfer,
-  StartTransferDto
+  StartTransferDto,
+  RequestDownloadDto,
+  DownloadResultDto
 } from "../types";
 
 const runtimeApiUrl = (typeof window !== "undefined" && (window as any)._env_?.VITE_API_URL) 
@@ -115,6 +117,11 @@ export async function startTransfer(dto: StartTransferDto): Promise<FileTransfer
 
 export async function cancelTransfer(transferId: string): Promise<void> {
   await api.delete(`/transfers/${transferId}`);
+}
+
+export async function requestFileDownload(dto: RequestDownloadDto): Promise<DownloadResultDto> {
+  const { data } = await api.post<DownloadResultDto>("/files/download", dto);
+  return data;
 }
 
 // Agent Releases & Auto-Update API

@@ -133,3 +133,19 @@ export interface FileTransfer {
   completedAt?: string;
 }
 
+export interface RequestDownloadDto {
+  machineId: string;
+  path: string;
+  isDirectory: boolean;
+  selectedPaths?: string[];
+}
+
+export interface DownloadResultDto {
+  downloadId: string;
+  fileName: string;
+  downloadUrl: string;
+  sizeBytes: number;
+  error?: string | null;
+}
+
+
