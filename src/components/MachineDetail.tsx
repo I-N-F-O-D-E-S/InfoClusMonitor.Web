@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getMachine, getCommands, deleteMachine, updateMachineName, createCommand, refreshMachineTelemetry } from "../services/api";
 import { signalRService } from "../services/signalr";
+import { FileExplorer } from "./FileExplorer";
+import { TransfersList } from "./TransfersList";
+import { AgentUpdateModal } from "./AgentUpdateModal";
 import type { Machine, Command } from "../types";
 import { MachineStatus, CommandStatus } from "../types";
 
@@ -85,6 +88,9 @@ export default function MachineDetail() {
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | "general" | "backup" | "docker" | "diag">("all");
 
+  // Tabs principales
+  const [activeMainTab, setActiveMainTab] = useState<"terminal" | "files" | "transfers">("terminal");
+
   // Editor multilínea
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -92,6 +98,7 @@ export default function MachineDetail() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [customName, setCustomName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -324,6 +331,14 @@ export default function MachineDetail() {
             </svg>
             {refreshing ? "Solicitando..." : "Actualizar"}
           </button>
+          <button
+            onClick={() => setShowUpdateModal(true)}
+            className="btn btn-secondary btn-sm"
+            title="Actualizar script del agente vía MinIO"
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            <span>🚀</span> Actualizar Agente
+          </button>
           <button onClick={() => setShowDelete(!showDelete)} className="btn btn-danger btn-sm">
             Eliminar Nodo
           </button>
@@ -469,8 +484,52 @@ export default function MachineDetail() {
         </div>
       </div>
 
-      {/* Terminal Web & Ejecución Remota */}
-      <div className="terminal-card">
+      {/* Selector de Pestañas Principales */}
+      <div className="main-tabs-nav" style={{ marginBottom: 20 }}>
+        <button
+          type="button"
+          className={`main-tab-btn ${activeMainTab === "terminal" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("terminal")}
+        >
+          <span>📟</span> Consola & Comandos
+        </button>
+        <button
+          type="button"
+          className={`main-tab-btn ${activeMainTab === "files" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("files")}
+        >
+          <span>📂</span> Explorador de Archivos (MinIO)
+        </button>
+        <button
+          type="button"
+          className={`main-tab-btn ${activeMainTab === "transfers" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("transfers")}
+        >
+          <span>🔄</span> Transferencias
+        </button>
+      </div>
+
+      {activeMainTab === "files" && (
+        <FileExplorer
+          machineId={machine.externalMachineId || id || ""}
+          hostname={machine.hostname}
+          isOnline={isOnline}
+        />
+      )}
+
+      {activeMainTab === "transfers" && (
+        <div className="card">
+          <TransfersList
+            machineId={machine.externalMachineId || id || ""}
+            showHeader={true}
+          />
+        </div>
+      )}
+
+      {activeMainTab === "terminal" && (
+        <>
+          {/* Terminal Web & Ejecución Remota */}
+          <div className="terminal-card">
         <div className="terminal-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div className="terminal-dots">
@@ -688,6 +747,17 @@ export default function MachineDetail() {
           );
         })}
       </div>
+        </>
+      )}
+
+      {/* Modal de Actualización de Agente */}
+      {showUpdateModal && (
+        <AgentUpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          targetMachine={machine}
+        />
+      )}
     </div>
   );
 }

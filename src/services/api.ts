@@ -1,5 +1,15 @@
 import axios from "axios";
-import type { Machine, Command, CreateCommandDto, AuthResponse, LoginDto, User } from "../types";
+import type {
+  Machine,
+  Command,
+  CreateCommandDto,
+  AuthResponse,
+  LoginDto,
+  User,
+  DirectoryContent,
+  FileTransfer,
+  StartTransferDto
+} from "../types";
 
 const runtimeApiUrl = (typeof window !== "undefined" && (window as any)._env_?.VITE_API_URL) 
   ? (window as any)._env_.VITE_API_URL 
@@ -78,3 +88,60 @@ export async function createCommand(dto: CreateCommandDto): Promise<Command> {
   const { data } = await api.post<Command>("/commands", dto);
   return data;
 }
+
+// Files & Transfers API
+export async function browseFiles(machineId: string, path: string = "/"): Promise<DirectoryContent> {
+  const { data } = await api.get<DirectoryContent>("/files/browse", {
+    params: { machineId, path },
+  });
+  return data;
+}
+
+export async function getTransfers(machineId?: string): Promise<FileTransfer[]> {
+  const params = machineId ? { machineId } : {};
+  const { data } = await api.get<FileTransfer[]>("/transfers", { params });
+  return data;
+}
+
+export async function getTransfer(transferId: string): Promise<FileTransfer> {
+  const { data } = await api.get<FileTransfer>(`/transfers/${transferId}`);
+  return data;
+}
+
+export async function startTransfer(dto: StartTransferDto): Promise<FileTransfer> {
+  const { data } = await api.post<FileTransfer>("/transfers", dto);
+  return data;
+}
+
+export async function cancelTransfer(transferId: string): Promise<void> {
+  await api.delete(`/transfers/${transferId}`);
+}
+
+// Agent Releases & Auto-Update API
+export async function getInstallCommand(): Promise<{ packageAvailable: boolean; installCommand: string; targetVersion: string }> {
+  const { data } = await api.get("/agentreleases/install-command");
+  return data;
+}
+
+export async function uploadAgentReleaseBundle(agentFile: File, installFile: File): Promise<{ message: string; installCommand: string; agentSize: number; installSize: number }> {
+  const formData = new FormData();
+  formData.append("agentFile", agentFile);
+  formData.append("installFile", installFile);
+  const { data } = await api.post("/agentreleases/upload-bundle", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+export async function deployToAll(): Promise<{ updatedCount: number; message: string }> {
+  const { data } = await api.post("/agentreleases/deploy-all");
+  return data;
+}
+
+export async function deployToMachine(machineId: string): Promise<Command> {
+  const { data } = await api.post<Command>(`/agentreleases/deploy/${machineId}`);
+  return data;
+}
+
+
+

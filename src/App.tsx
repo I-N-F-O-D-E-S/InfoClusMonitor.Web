@@ -5,6 +5,7 @@ import { Navbar } from "./components/Navbar";
 import { Login } from "./components/Login";
 import MachineList from "./components/MachineList";
 import MachineDetail from "./components/MachineDetail";
+import { TransfersList } from "./components/TransfersList";
 
 export default function App() {
   return (
@@ -28,6 +29,16 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <MachineDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/transfers"
+                element={
+                  <ProtectedRoute>
+                    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px" }}>
+                      <TransfersList showHeader={true} />
+                    </div>
                   </ProtectedRoute>
                 }
               />

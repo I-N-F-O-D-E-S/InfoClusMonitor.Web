@@ -76,3 +76,60 @@ export interface LoginDto {
   usernameOrEmail: string;
   password: string;
 }
+
+export const TransferStatus = {
+  Pending: "Pending",
+  Uploading: "Uploading",
+  Uploaded: "Uploaded",
+  Downloading: "Downloading",
+  Completed: "Completed",
+  Failed: "Failed",
+  Cancelled: "Cancelled",
+} as const;
+export type TransferStatus = (typeof TransferStatus)[keyof typeof TransferStatus] | 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+export interface FileItem {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size: number;
+  sizeFormatted: string;
+  modifiedAt?: string;
+  permissions?: string;
+  extension?: string;
+}
+
+export interface DirectoryContent {
+  currentPath: string;
+  parentPath?: string | null;
+  items: FileItem[];
+  error?: string | null;
+}
+
+export interface StartTransferDto {
+  sourceMachineId: string;
+  sourcePath: string;
+  isDirectory: boolean;
+  targetMachineId: string;
+  targetPath: string;
+}
+
+export interface FileTransfer {
+  id: number;
+  transferId: string;
+  sourceMachineId: string;
+  sourceHostname: string;
+  sourcePath: string;
+  isDirectory: boolean;
+  targetMachineId: string;
+  targetHostname: string;
+  targetPath: string;
+  status: TransferStatus;
+  sizeBytes: number;
+  sizeFormatted: string;
+  progressPercent: number;
+  errorMessage?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+

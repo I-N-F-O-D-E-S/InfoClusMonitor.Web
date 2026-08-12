@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getMachines } from "../services/api";
 import { signalRService } from "../services/signalr";
+import { AgentUpdateModal } from "./AgentUpdateModal";
 import type { Machine } from "../types";
 import { MachineStatus } from "../types";
 
@@ -41,6 +42,7 @@ export default function MachineList() {
   const [statusFilter, setStatusFilter] = useState<string>("TODOS");
   const [isLoading, setIsLoading] = useState(true);
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
+  const [updateModalTarget, setUpdateModalTarget] = useState<Machine | null | undefined>(undefined);
 
   useEffect(() => {
     let isMounted = true;
@@ -130,6 +132,17 @@ export default function MachineList() {
         <div className="section-title">
           <h2>Servidores y Nodos Cloud</h2>
           <p className="section-subtitle">Supervisión centralizada, telemetría y ejecución remota en tiempo real</p>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => setUpdateModalTarget(null)}
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            <span>🚀</span> Actualizar Agentes (MinIO)
+          </button>
         </div>
       </div>
 
@@ -386,14 +399,28 @@ export default function MachineList() {
 
                     {/* Acciones */}
                     <td style={{ textAlign: "right" }}>
-                      <Link
-                        to={`/machines/${targetId}`}
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: "5px 12px", fontSize: "12px", gap: 4 }}
-                      >
-                        <span>Terminal</span>
-                        <span>&gt;</span>
-                      </Link>
+                      <div style={{ display: "inline-flex", gap: 6 }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUpdateModalTarget(m);
+                          }}
+                          title={`Actualizar agente en ${m.hostname}`}
+                          style={{ padding: "4px 8px", fontSize: "11px" }}
+                        >
+                          🚀 Actualizar
+                        </button>
+                        <Link
+                          to={`/machines/${targetId}`}
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: "5px 12px", fontSize: "12px", gap: 4 }}
+                        >
+                          <span>Terminal</span>
+                          <span>&gt;</span>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -401,6 +428,15 @@ export default function MachineList() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Modal de Actualización de Agente */}
+      {updateModalTarget !== undefined && (
+        <AgentUpdateModal
+          isOpen={updateModalTarget !== undefined}
+          onClose={() => setUpdateModalTarget(undefined)}
+          targetMachine={updateModalTarget}
+        />
       )}
     </div>
   );

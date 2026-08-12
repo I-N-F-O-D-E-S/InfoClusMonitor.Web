@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { signalRService } from "../services/signalr";
 
 export const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -27,19 +28,64 @@ export const Navbar = () => {
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-brand">
-          <div className="brand-icon-wrapper">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-            </svg>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="brand-name">InfodesCluster</span>
-              <span className="brand-tag">ENTERPRISE</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <Link to="/" className="navbar-brand">
+            <div className="brand-icon-wrapper">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+              </svg>
             </div>
-          </div>
-        </Link>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="brand-name">InfodesCluster</span>
+                <span className="brand-tag">ENTERPRISE</span>
+              </div>
+            </div>
+          </Link>
+
+          {/* Navigation Links */}
+          <nav className="navbar-links" style={{ display: "flex", gap: 12 }}>
+            <Link
+              to="/"
+              className={`nav-link ${location.pathname === "/" || location.pathname.startsWith("/machines") ? "active" : ""}`}
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: location.pathname === "/" || location.pathname.startsWith("/machines") ? "#38bdf8" : "#94a3b8",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: "6px",
+                background: location.pathname === "/" || location.pathname.startsWith("/machines") ? "rgba(56, 189, 248, 0.1)" : "transparent",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <span>🖥️</span> Nodos
+            </Link>
+
+            <Link
+              to="/transfers"
+              className={`nav-link ${location.pathname === "/transfers" ? "active" : ""}`}
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: location.pathname === "/transfers" ? "#38bdf8" : "#94a3b8",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: "6px",
+                background: location.pathname === "/transfers" ? "rgba(56, 189, 248, 0.1)" : "transparent",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <span>🔄</span> Transferencias MinIO
+            </Link>
+          </nav>
+        </div>
 
         <div className="navbar-actions">
           <div className="connection-pill" title={isConnected ? "Transmisión en tiempo real activa" : "Conectando al stream..."}>
