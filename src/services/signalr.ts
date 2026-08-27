@@ -104,6 +104,22 @@ class SignalRService {
     this.connection?.on("BackupDeleted", cb);
   }
 
+  onScheduledTaskCreated(cb: (task: import("../types").ScheduledTask) => void) {
+    this.connection?.on("ScheduledTaskCreated", cb);
+  }
+
+  onScheduledTaskUpdated(cb: (task: import("../types").ScheduledTask) => void) {
+    this.connection?.on("ScheduledTaskUpdated", cb);
+  }
+
+  onScheduledTaskDeleted(cb: (taskId: string) => void) {
+    this.connection?.on("ScheduledTaskDeleted", cb);
+  }
+
+  onScheduledExecutionUpdated(cb: (execution: import("../types").ScheduledTaskExecution) => void) {
+    this.connection?.on("ScheduledExecutionUpdated", cb);
+  }
+
   async subscribeToMachine(machineId: string) {
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
       try {

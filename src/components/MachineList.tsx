@@ -139,9 +139,15 @@ export default function MachineList() {
             type="button"
             className="btn btn-primary btn-sm"
             onClick={() => setUpdateModalTarget(null)}
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontWeight: 700,
+              padding: "7px 14px"
+            }}
           >
-            <span>🚀</span> Actualizar Agentes
+            <span>➕</span> Agregar Servidor / Instalar Agente
           </button>
         </div>
       </div>

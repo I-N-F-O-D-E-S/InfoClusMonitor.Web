@@ -4,6 +4,7 @@ import { getMachine, getCommands, deleteMachine, updateMachineName, createComman
 import { signalRService } from "../services/signalr";
 import { FileExplorer } from "./FileExplorer";
 import { BackupsList } from "./BackupsList";
+import { ScheduledTasksList } from "./ScheduledTasksList";
 import { AgentUpdateModal } from "./AgentUpdateModal";
 import type { Machine, Command } from "../types";
 import { MachineStatus, CommandStatus } from "../types";
@@ -89,7 +90,7 @@ export default function MachineDetail() {
   const [activeCategory, setActiveCategory] = useState<"all" | "general" | "backup" | "docker" | "diag">("all");
 
   // Tabs principales
-  const [activeMainTab, setActiveMainTab] = useState<"terminal" | "files" | "backups">("terminal");
+  const [activeMainTab, setActiveMainTab] = useState<"terminal" | "files" | "backups" | "scheduled">("terminal");
 
   // Editor multilínea
   const [isExpanded, setIsExpanded] = useState(false);
@@ -507,6 +508,13 @@ export default function MachineDetail() {
         >
           <span>💾</span> Copias de Seguridad
         </button>
+        <button
+          type="button"
+          className={`main-tab-btn ${activeMainTab === "scheduled" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("scheduled")}
+        >
+          <span>⏰</span> Tareas Programadas
+        </button>
       </div>
 
       {activeMainTab === "files" && (
@@ -520,6 +528,15 @@ export default function MachineDetail() {
       {activeMainTab === "backups" && (
         <div className="card">
           <BackupsList
+            machineId={machine.externalMachineId || id || ""}
+            showHeader={true}
+          />
+        </div>
+      )}
+
+      {activeMainTab === "scheduled" && (
+        <div className="card">
+          <ScheduledTasksList
             machineId={machine.externalMachineId || id || ""}
             showHeader={true}
           />

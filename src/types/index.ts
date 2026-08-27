@@ -182,5 +182,79 @@ export interface CreateBackupDto {
   customName?: string;
 }
 
+export interface ScheduledTask {
+  id: number;
+  taskId: string;
+  machineId: string;
+  hostname: string;
+  name: string;
+  description: string;
+  command: string;
+  scheduleType: string;
+  intervalValue?: number;
+  scheduledTime?: string;
+  daysOfWeek?: string;
+  specificDate?: string;
+  cronExpression?: string;
+  timezone: string;
+  isEnabled: boolean;
+  nextRunAt?: string;
+  lastRunAt?: string;
+  lastStatus?: string;
+  lastResult?: string;
+  lastDurationMs?: number;
+  createdAt: string;
+  updatedAt: string;
+  scheduleSummary: string;
+  nextRunParaguayFormatted: string;
+  lastRunParaguayFormatted: string;
+}
+
+export interface CreateScheduledTaskDto {
+  machineId: string;
+  name: string;
+  description?: string;
+  command: string;
+  scheduleType: string;
+  intervalValue?: number;
+  scheduledTime?: string;
+  daysOfWeek?: string;
+  specificDate?: string;
+  cronExpression?: string;
+  timezone?: string;
+}
+
+export interface UpdateScheduledTaskDto {
+  name: string;
+  description?: string;
+  command: string;
+  scheduleType: string;
+  intervalValue?: number;
+  scheduledTime?: string;
+  daysOfWeek?: string;
+  specificDate?: string;
+  cronExpression?: string;
+  timezone?: string;
+}
+
+export interface ScheduledTaskExecution {
+  id: number;
+  executionId: string;
+  taskId: string;
+  machineId: string;
+  hostname: string;
+  taskName: string;
+  command: string;
+  status: string;
+  result?: string;
+  errorMessage?: string;
+  exitCode?: number;
+  durationMs: number;
+  startedAt: string;
+  completedAt?: string;
+  startedAtParaguayFormatted: string;
+  durationFormatted: string;
+}
+
 
 

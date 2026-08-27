@@ -180,3 +180,46 @@ export async function restoreBackup(
 export async function deleteBackup(id: string | number): Promise<void> {
   await api.delete(`/backups/${id}`);
 }
+
+// Scheduled Tasks & Automations API (Horario Paraguayo)
+export async function getScheduledTasks(machineId?: string): Promise<import("../types").ScheduledTask[]> {
+  const params = machineId ? { machineId } : {};
+  const { data } = await api.get<import("../types").ScheduledTask[]>("/scheduledtasks", { params });
+  return data;
+}
+
+export async function getScheduledTask(id: string): Promise<import("../types").ScheduledTask> {
+  const { data } = await api.get<import("../types").ScheduledTask>(`/scheduledtasks/${id}`);
+  return data;
+}
+
+export async function getScheduledTaskExecutions(id: string, limit: number = 50): Promise<import("../types").ScheduledTaskExecution[]> {
+  const { data } = await api.get<import("../types").ScheduledTaskExecution[]>(`/scheduledtasks/${id}/executions`, {
+    params: { limit },
+  });
+  return data;
+}
+
+export async function createScheduledTask(dto: import("../types").CreateScheduledTaskDto): Promise<import("../types").ScheduledTask> {
+  const { data } = await api.post<import("../types").ScheduledTask>("/scheduledtasks", dto);
+  return data;
+}
+
+export async function updateScheduledTask(id: string, dto: import("../types").UpdateScheduledTaskDto): Promise<import("../types").ScheduledTask> {
+  const { data } = await api.put<import("../types").ScheduledTask>(`/scheduledtasks/${id}`, dto);
+  return data;
+}
+
+export async function toggleScheduledTask(id: string): Promise<import("../types").ScheduledTask> {
+  const { data } = await api.patch<import("../types").ScheduledTask>(`/scheduledtasks/${id}/toggle`);
+  return data;
+}
+
+export async function runScheduledTaskNow(id: string): Promise<{ message: string }> {
+  const { data } = await api.post<{ message: string }>(`/scheduledtasks/${id}/run`);
+  return data;
+}
+
+export async function deleteScheduledTask(id: string): Promise<void> {
+  await api.delete(`/scheduledtasks/${id}`);
+}

@@ -6,6 +6,7 @@ import { Login } from "./components/Login";
 import MachineList from "./components/MachineList";
 import MachineDetail from "./components/MachineDetail";
 import { BackupsList } from "./components/BackupsList";
+import { ScheduledTasksList } from "./components/ScheduledTasksList";
 
 export default function App() {
   return (
@@ -34,10 +35,20 @@ export default function App() {
               />
               <Route path="/transfers" element={<Navigate to="/backups" replace />} />
               <Route
+                path="/scheduled-tasks"
+                element={
+                  <ProtectedRoute>
+                    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "20px" }}>
+                      <ScheduledTasksList showHeader={true} />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/backups"
                 element={
                   <ProtectedRoute>
-                    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px" }}>
+                    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "20px" }}>
                       <BackupsList showHeader={true} />
                     </div>
                   </ProtectedRoute>
