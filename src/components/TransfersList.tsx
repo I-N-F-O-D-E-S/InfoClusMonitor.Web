@@ -70,19 +70,19 @@ export const TransfersList: React.FC<TransfersListProps> = ({
     switch (s) {
       case "pending":
       case "0":
-        return <span className="badge badge-warning">🟡 Pendiente</span>;
+        return <span className="badge badge-warning">🟡 En cola</span>;
       case "uploading":
       case "1":
-        return <span className="badge badge-info">🔵 Subiendo a MinIO...</span>;
+        return <span className="badge badge-info">🔵 Enviando desde origen...</span>;
       case "uploaded":
       case "2":
-        return <span className="badge badge-info">📦 En MinIO Staging</span>;
+        return <span className="badge badge-info">📦 Preparando recepción...</span>;
       case "downloading":
       case "3":
-        return <span className="badge badge-purple">🟣 Descargando en Destino...</span>;
+        return <span className="badge badge-purple">🟣 Extrayendo en destino...</span>;
       case "completed":
       case "4":
-        return <span className="badge badge-success">✅ Completada (MinIO borrado)</span>;
+        return <span className="badge badge-success">✅ Completada con éxito</span>;
       case "failed":
       case "5":
         return <span className="badge badge-danger">🔴 Fallida</span>;
@@ -116,10 +116,10 @@ export const TransfersList: React.FC<TransfersListProps> = ({
             <span style={{ fontSize: "22px" }}>🔄</span>
             <div>
               <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#f8fafc" }}>
-                Historial de Transferencias MinIO
+                Historial de Transferencias entre Servidores
               </h3>
               <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>
-                Transferencia segura entre servidores con limpieza automática
+                Transferencia directa y segura entre servidores con limpieza automática
               </p>
             </div>
           </div>
@@ -241,7 +241,7 @@ export const TransfersList: React.FC<TransfersListProps> = ({
 
                   <div className="flow-indicator">
                     <span className="flow-arrow">➔</span>
-                    <span className="flow-storage-tag">MinIO S3</span>
+                    <span className="flow-storage-tag">Canal Cifrado</span>
                   </div>
 
                   <div className="flow-node target">
@@ -281,7 +281,7 @@ export const TransfersList: React.FC<TransfersListProps> = ({
 
                   {isCompleted && (
                     <div className="cleanup-badge">
-                      <span>🧹 Buffer MinIO eliminado</span>
+                      <span>🧹 Limpieza automática realizada</span>
                     </div>
                   )}
 

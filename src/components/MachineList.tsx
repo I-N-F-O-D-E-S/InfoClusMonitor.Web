@@ -141,7 +141,7 @@ export default function MachineList() {
             onClick={() => setUpdateModalTarget(null)}
             style={{ display: "flex", alignItems: "center", gap: 6 }}
           >
-            <span>🚀</span> Actualizar Agentes (MinIO)
+            <span>🚀</span> Actualizar Agentes
           </button>
         </div>
       </div>

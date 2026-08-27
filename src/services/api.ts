@@ -10,7 +10,9 @@ import type {
   FileTransfer,
   StartTransferDto,
   RequestDownloadDto,
-  DownloadResultDto
+  DownloadResultDto,
+  BackupRecord,
+  CreateBackupDto
 } from "../types";
 
 const runtimeApiUrl = (typeof window !== "undefined" && (window as any)._env_?.VITE_API_URL) 
@@ -125,12 +127,12 @@ export async function requestFileDownload(dto: RequestDownloadDto): Promise<Down
 }
 
 // Agent Releases & Auto-Update API
-export async function getInstallCommand(): Promise<{ packageAvailable: boolean; installCommand: string; targetVersion: string }> {
+export async function getInstallCommand(): Promise<{ packageAvailable: boolean; installCommand: string; downloadUrl: string; targetVersion: string }> {
   const { data } = await api.get("/agentreleases/install-command");
   return data;
 }
 
-export async function uploadAgentReleaseBundle(agentFile: File, installFile: File): Promise<{ message: string; installCommand: string; agentSize: number; installSize: number }> {
+export async function uploadAgentReleaseBundle(agentFile: File, installFile: File): Promise<{ message: string; installCommand: string; downloadUrl: string; agentSize: number; installSize: number }> {
   const formData = new FormData();
   formData.append("agentFile", agentFile);
   formData.append("installFile", installFile);
@@ -150,5 +152,31 @@ export async function deployToMachine(machineId: string): Promise<Command> {
   return data;
 }
 
+// Backups API (MinIO Bucket: copias-de-seguridad)
+export async function getBackups(machineId?: string): Promise<BackupRecord[]> {
+  const params = machineId ? { machineId } : {};
+  const { data } = await api.get<BackupRecord[]>("/backups", { params });
+  return data;
+}
 
+export async function getBackup(id: string): Promise<BackupRecord> {
+  const { data } = await api.get<BackupRecord>(`/backups/${id}`);
+  return data;
+}
 
+export async function createBackup(dto: CreateBackupDto): Promise<BackupRecord> {
+  const { data } = await api.post<BackupRecord>("/backups", dto);
+  return data;
+}
+
+export async function restoreBackup(
+  backupId: string,
+  dto: { targetMachineId?: string; targetPath?: string }
+): Promise<{ backupId: string; machineId: string; targetPath: string; status: string; message: string }> {
+  const { data } = await api.post(`/backups/${backupId}/restore`, dto);
+  return data;
+}
+
+export async function deleteBackup(id: string | number): Promise<void> {
+  await api.delete(`/backups/${id}`);
+}

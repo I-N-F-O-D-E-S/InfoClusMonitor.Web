@@ -67,24 +67,25 @@ export const Navbar = () => {
               <span>🖥️</span> Nodos
             </Link>
 
+
             <Link
-              to="/transfers"
-              className={`nav-link ${location.pathname === "/transfers" ? "active" : ""}`}
+              to="/backups"
+              className={`nav-link ${location.pathname === "/backups" ? "active" : ""}`}
               style={{
                 fontSize: "13px",
                 fontWeight: 600,
-                color: location.pathname === "/transfers" ? "#38bdf8" : "#94a3b8",
+                color: location.pathname === "/backups" ? "#38bdf8" : "#94a3b8",
                 textDecoration: "none",
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
                 padding: "6px 12px",
                 borderRadius: "6px",
-                background: location.pathname === "/transfers" ? "rgba(56, 189, 248, 0.1)" : "transparent",
+                background: location.pathname === "/backups" ? "rgba(56, 189, 248, 0.1)" : "transparent",
                 transition: "all 0.2s ease",
               }}
             >
-              <span>🔄</span> Transferencias MinIO
+              <span>💾</span> Copias de Seguridad
             </Link>
           </nav>
         </div>

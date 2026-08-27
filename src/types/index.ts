@@ -148,4 +148,39 @@ export interface DownloadResultDto {
   error?: string | null;
 }
 
+export const BackupStatus = {
+  Pending: "Pending",
+  Compressing: "Compressing",
+  Uploading: "Uploading",
+  Completed: "Completed",
+  Failed: "Failed",
+} as const;
+export type BackupStatus = (typeof BackupStatus)[keyof typeof BackupStatus] | 0 | 1 | 2 | 3 | 4;
+
+export interface BackupRecord {
+  id: number;
+  backupId: string;
+  machineId: string;
+  hostname: string;
+  sourcePath: string;
+  customName: string;
+  fileName: string;
+  minioBucket: string;
+  minioObjectName: string;
+  status: BackupStatus;
+  sizeBytes: number;
+  sizeFormatted: string;
+  errorMessage?: string;
+  createdAt: string;
+  completedAt?: string;
+  downloadUrl?: string;
+}
+
+export interface CreateBackupDto {
+  machineId: string;
+  sourcePath: string;
+  customName?: string;
+}
+
+
 

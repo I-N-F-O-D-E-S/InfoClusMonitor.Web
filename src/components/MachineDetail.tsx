@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { getMachine, getCommands, deleteMachine, updateMachineName, createCommand, refreshMachineTelemetry } from "../services/api";
 import { signalRService } from "../services/signalr";
 import { FileExplorer } from "./FileExplorer";
-import { TransfersList } from "./TransfersList";
+import { BackupsList } from "./BackupsList";
 import { AgentUpdateModal } from "./AgentUpdateModal";
 import type { Machine, Command } from "../types";
 import { MachineStatus, CommandStatus } from "../types";
@@ -89,7 +89,7 @@ export default function MachineDetail() {
   const [activeCategory, setActiveCategory] = useState<"all" | "general" | "backup" | "docker" | "diag">("all");
 
   // Tabs principales
-  const [activeMainTab, setActiveMainTab] = useState<"terminal" | "files" | "transfers">("terminal");
+  const [activeMainTab, setActiveMainTab] = useState<"terminal" | "files" | "backups">("terminal");
 
   // Editor multilínea
   const [isExpanded, setIsExpanded] = useState(false);
@@ -333,8 +333,8 @@ export default function MachineDetail() {
           </button>
           <button
             onClick={() => setShowUpdateModal(true)}
-            className="btn btn-secondary btn-sm"
-            title="Actualizar script del agente vía MinIO"
+            className="btn btn-primary btn-sm"
+            title="Actualizar agente en este servidor"
             style={{ display: "flex", alignItems: "center", gap: 6 }}
           >
             <span>🚀</span> Actualizar Agente
@@ -498,14 +498,14 @@ export default function MachineDetail() {
           className={`main-tab-btn ${activeMainTab === "files" ? "active" : ""}`}
           onClick={() => setActiveMainTab("files")}
         >
-          <span>📂</span> Explorador de Archivos (MinIO)
+          <span>📂</span> Explorador de Archivos
         </button>
         <button
           type="button"
-          className={`main-tab-btn ${activeMainTab === "transfers" ? "active" : ""}`}
-          onClick={() => setActiveMainTab("transfers")}
+          className={`main-tab-btn ${activeMainTab === "backups" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("backups")}
         >
-          <span>🔄</span> Transferencias
+          <span>💾</span> Copias de Seguridad
         </button>
       </div>
 
@@ -517,9 +517,9 @@ export default function MachineDetail() {
         />
       )}
 
-      {activeMainTab === "transfers" && (
+      {activeMainTab === "backups" && (
         <div className="card">
-          <TransfersList
+          <BackupsList
             machineId={machine.externalMachineId || id || ""}
             showHeader={true}
           />

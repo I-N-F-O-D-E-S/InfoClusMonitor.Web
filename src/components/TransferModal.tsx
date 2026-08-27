@@ -108,7 +108,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 Transferir entre Servidores
               </h3>
               <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>
-                Transferencia temporal y segura mediante MinIO S3
+                Transferencia directa, segura y cifrada entre nodos del cluster
               </p>
             </div>
           </div>
@@ -211,13 +211,12 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             </div>
           </div>
 
-          {/* MinIO Staging Info */}
+          {/* Transfer Info */}
           <div className="minio-info-banner">
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
               <span style={{ fontSize: "18px" }}>🛡️</span>
               <div style={{ fontSize: "12px", color: "#cbd5e1", lineHeight: 1.4 }}>
-                <strong>Transferencia Asíncrona vía MinIO S3:</strong> El servidor origen sube el contenido de manera segura al almacenamiento temporal. El servidor destino lo descarga y extrae automáticamente. 
-                <span style={{ color: "#38bdf8", fontWeight: 600 }}> El archivo se borra automáticamente de MinIO al finalizar la transferencia.</span>
+                <strong>Transferencia Segura y Automática:</strong> El servidor de origen envía el contenido de manera cifrada. El servidor de destino lo recibe y extrae automáticamente en la ruta especificada.
               </div>
             </div>
           </div>

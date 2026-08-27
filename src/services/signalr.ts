@@ -1,5 +1,5 @@
 import * as signalR from "@microsoft/signalr";
-import type { Machine, Command, FileTransfer, DirectoryContent } from "../types";
+import type { Machine, Command, FileTransfer, DirectoryContent, BackupRecord } from "../types";
 
 type MachineCallback = (machine: Machine) => void;
 type MachineDeletedCallback = (id: string) => void;
@@ -90,6 +90,18 @@ class SignalRService {
 
   onDirectoryLoaded(cb: (content: DirectoryContent) => void) {
     this.connection?.on("DirectoryLoaded", cb);
+  }
+
+  onBackupCreated(cb: (backup: BackupRecord) => void) {
+    this.connection?.on("BackupCreated", cb);
+  }
+
+  onBackupUpdated(cb: (backup: BackupRecord) => void) {
+    this.connection?.on("BackupUpdated", cb);
+  }
+
+  onBackupDeleted(cb: (backupId: string) => void) {
+    this.connection?.on("BackupDeleted", cb);
   }
 
   async subscribeToMachine(machineId: string) {

@@ -21,7 +21,10 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
   onUpdated,
 }) => {
   const [installCommand, setInstallCommand] = useState<string>("");
-  const [copied, setCopied] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>("https://storageapi.mrapy.com/infoclus-releases/agent-package.tar.gz");
+  const [targetVersion, setTargetVersion] = useState<string>("1.2.0");
+  const [copiedCmd, setCopiedCmd] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -40,6 +43,12 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
           if (res.installCommand) {
             setInstallCommand(res.installCommand);
           }
+          if (res.downloadUrl) {
+            setDownloadUrl(res.downloadUrl);
+          }
+          if (res.targetVersion) {
+            setTargetVersion(res.targetVersion);
+          }
         })
         .catch((e) => console.error("Error loading install command:", e));
     }
@@ -47,11 +56,18 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleCopy = () => {
+  const handleCopyCmd = () => {
     if (!installCommand) return;
     navigator.clipboard.writeText(installCommand);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedCmd(true);
+    setTimeout(() => setCopiedCmd(false), 2000);
+  };
+
+  const handleCopyUrl = () => {
+    if (!downloadUrl) return;
+    navigator.clipboard.writeText(downloadUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 2000);
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -67,12 +83,13 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
 
     try {
       const res = await uploadAgentReleaseBundle(agentFile, installFile);
-      setInstallCommand(res.installCommand);
-      setSuccessMsg("¡Archivos cargados exitosamente a MinIO! Comando actualizado generado abajo.");
+      if (res.installCommand) setInstallCommand(res.installCommand);
+      if (res.downloadUrl) setDownloadUrl(res.downloadUrl);
+      setSuccessMsg("¡Archivos empaquetados y publicados exitosamente! Enlace y comando actualizados.");
       setAgentFile(null);
       setInstallFile(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || "Error al subir archivos a MinIO.");
+      setError(err.response?.data?.error || err.message || "Error al subir archivos.");
     } finally {
       setIsUploading(false);
     }
@@ -86,10 +103,10 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
     try {
       if (targetMachine) {
         await deployToMachine(targetMachine.externalMachineId);
-        setSuccessMsg(`¡Comando enviado por RabbitMQ a ${targetMachine.hostname}!`);
+        setSuccessMsg(`¡Orden de actualización enviada a ${targetMachine.hostname}!`);
       } else {
         const res = await deployToAll();
-        setSuccessMsg(`¡Comando enviado por RabbitMQ a ${res.updatedCount} servidores en línea!`);
+        setSuccessMsg(`¡Orden de actualización enviada a ${res.updatedCount} servidores en línea!`);
       }
       if (onUpdated) onUpdated();
     } catch (err: any) {
@@ -101,23 +118,23 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content transfer-modal" style={{ maxWidth: "680px" }} onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content transfer-modal" style={{ maxWidth: "720px" }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <img src="/logo_simple.png" alt="BuhoControl Logo" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
             <div>
               <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#f8fafc" }}>
-                BuhoControl — Instalador y Actualizador de Agente
+                Instalación y Actualización de Agente Linux
               </h3>
               <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>
-                Carga de archivos a MinIO y generación de comando bash 1-click para Linux
+                Versión oficial v{targetVersion} y comando de aprovisionamiento 1-clic
               </p>
             </div>
           </div>
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
 
-        <div className="modal-body" style={{ maxHeight: "80vh", overflowY: "auto" }}>
+        <div className="modal-body" style={{ maxHeight: "82vh", overflowY: "auto" }}>
           {error && (
             <div className="alert-error" style={{ marginBottom: 16 }}>
               <span>⚠️ {error}</span>
@@ -130,20 +147,101 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
             </div>
           )}
 
-          {/* 1. SECCIÓN DE CARGA DE ARCHIVOS */}
-          <div style={{ background: "#0c0d14", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 20 }}>
+          {/* 1. SECCIÓN: URL DIRECTA DEL PAQUETE */}
+          <div style={{ background: "#0c0d14", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "16px" }}>🌐</span>
+                <strong style={{ color: "#38bdf8", fontSize: "13px" }}>
+                  Enlace Directo del Paquete de Instalación
+                </strong>
+                <span className="badge badge-mono" style={{ fontSize: "10px", padding: "2px 6px" }}>
+                  v{targetVersion}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleCopyUrl}
+                disabled={!downloadUrl}
+                style={{ padding: "3px 10px", fontSize: "11px", display: "flex", alignItems: "center", gap: 5 }}
+              >
+                <span>{copiedUrl ? "✓" : "📋"}</span>
+                {copiedUrl ? "¡Copiada!" : "Copiar Enlace"}
+              </button>
+            </div>
+
+            <div style={{
+              background: "#040406",
+              border: "1px solid #1e293b",
+              borderRadius: "6px",
+              padding: "8px 12px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "12px",
+              color: "#93c5fd",
+              wordBreak: "break-all",
+              lineHeight: 1.4,
+              userSelect: "all",
+            }}>
+              {downloadUrl || "https://storageapi.mrapy.com/infoclus-releases/agent-package.tar.gz"}
+            </div>
+          </div>
+
+          {/* 2. SECCIÓN: COMANDO BASH 1-CLIC */}
+          <div style={{ background: "#09090d", border: "1px solid #2d2d3f", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "16px" }}>💻</span>
+                <strong style={{ color: "#34d399", fontSize: "14px" }}>
+                  Comando de Instalación / Actualización en Linux
+                </strong>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={handleCopyCmd}
+                disabled={!installCommand}
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <span>{copiedCmd ? "✓" : "📋"}</span>
+                {copiedCmd ? "¡Comando Copiado!" : "Copiar Comando"}
+              </button>
+            </div>
+
+            <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: 10, lineHeight: 1.4 }}>
+              Pega este comando en la terminal SSH de tu servidor como <code className="font-mono">root</code> o con <code className="font-mono">sudo</code>. Descarga el paquete, configura el entorno virtual y arranca el servicio de sistema automáticamente:
+            </p>
+
+            <div style={{
+              background: "#040406",
+              border: "1px solid #1e293b",
+              borderRadius: "6px",
+              padding: "12px 14px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "12px",
+              color: "#38bdf8",
+              wordBreak: "break-all",
+              lineHeight: 1.5,
+              userSelect: "all",
+            }}>
+              {installCommand || "Cargando comando..."}
+            </div>
+          </div>
+
+          {/* 3. SECCIÓN DE CARGA DE NUEVA VERSIÓN */}
+          <div style={{ background: "#0c0d14", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span style={{ fontSize: "16px" }}>📤</span>
-              <strong style={{ color: "#38bdf8", fontSize: "14px" }}>
-                1. Cargar Archivos del Agente (agent.py + install.sh)
+              <strong style={{ color: "#e2e8f0", fontSize: "13px" }}>
+                Publicar Nueva Versión del Agente (agent.py + install.sh)
               </strong>
             </div>
             
             <form onSubmit={handleUpload}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
                 <div>
-                  <label style={{ fontSize: "12px", color: "#e2e8f0", display: "block", marginBottom: 4, fontWeight: 600 }}>
-                    📄 1. Script del Agente (agent.py):
+                  <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: 4, fontWeight: 600 }}>
+                    📄 Script del Agente (agent.py):
                   </label>
                   <input
                     type="file"
@@ -156,8 +254,8 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: "12px", color: "#e2e8f0", display: "block", marginBottom: 4, fontWeight: 600 }}>
-                    ⚡ 2. Instalador Bash (install.sh):
+                  <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: 4, fontWeight: 600 }}>
+                    ⚡ Instalador Bash (install.sh):
                   </label>
                   <input
                     type="file"
@@ -180,11 +278,11 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
                   {isUploading ? (
                     <>
                       <span className="spinner-small"></span>
-                      Subiendo a MinIO...
+                      Publicando paquete...
                     </>
                   ) : (
                     <>
-                      <span>☁️</span> Subir a MinIO y Generar Comando
+                      <span>☁️</span> Subir y Actualizar Paquete
                     </>
                   )}
                 </button>
@@ -192,51 +290,10 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
             </form>
           </div>
 
-          {/* 2. SECCIÓN DEL COMANDO GENERADO */}
-          <div style={{ background: "#09090d", border: "1px solid #2d2d3f", borderRadius: "var(--radius-md)", padding: 16, marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: "16px" }}>💻</span>
-                <strong style={{ color: "#34d399", fontSize: "14px" }}>
-                  2. Comando de Instalación / Actualización en Linux
-                </strong>
-              </div>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={handleCopy}
-                disabled={!installCommand}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <span>{copied ? "✓" : "📋"}</span>
-                {copied ? "¡Copiado al Portapapeles!" : "Copiar Comando"}
-              </button>
-            </div>
-
-            <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: 10, lineHeight: 1.4 }}>
-              Pega este comando como <code className="font-mono">root</code> en tu servidor. Descarga ambos archivos de MinIO, instala el entorno virtual Python y arranca el servicio <code className="font-mono">systemd</code> automáticamente:
-            </p>
-
-            <div style={{
-              background: "#040406",
-              border: "1px solid #1e293b",
-              borderRadius: "6px",
-              padding: "12px 14px",
-              fontFamily: "var(--font-mono)",
-              fontSize: "12px",
-              color: "#38bdf8",
-              wordBreak: "break-all",
-              lineHeight: 1.5,
-              userSelect: "all",
-            }}>
-              {installCommand || "Cargando comando firmado..."}
-            </div>
-          </div>
-
-          {/* 3. LANZAMIENTO REMOTO OPCIONAL */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, paddingTop: 6 }}>
+          {/* 4. ACTUALIZACIÓN REMOTA */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, paddingTop: 4 }}>
             <div style={{ fontSize: "12px", color: "#64748b" }}>
-              ¿Ya tienes servidores en línea? Puedes enviarles este comando directamente por RabbitMQ.
+              ¿Servidores en línea? Puedes despachar la actualización a los nodos directamente desde el panel.
             </div>
             
             <div style={{ display: "flex", gap: 10 }}>
@@ -253,12 +310,12 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
                 {isDeploying ? (
                   <>
                     <span className="spinner-small"></span>
-                    Enviando por RabbitMQ...
+                    Enviando orden...
                   </>
                 ) : (
                   <>
                     <span>🚀</span>
-                    {targetMachine ? "Enviar a este Servidor" : "Enviar a Todo el Cluster"}
+                    {targetMachine ? `Actualizar ${targetMachine.hostname}` : "Actualizar Todo el Cluster"}
                   </>
                 )}
               </button>

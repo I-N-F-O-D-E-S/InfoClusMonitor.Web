@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { browseFiles, requestFileDownload } from "../services/api";
 import { signalRService } from "../services/signalr";
 import type { DirectoryContent, FileItem } from "../types";
-import { TransferModal } from "./TransferModal";
+import { BackupModal } from "./BackupModal";
 
 interface FileExplorerProps {
   machineId: string;
@@ -12,7 +12,6 @@ interface FileExplorerProps {
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({
   machineId,
-  hostname,
   isOnline,
 }) => {
   const [currentPath, setCurrentPath] = useState<string>("/");
@@ -26,8 +25,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   // Selección múltiple
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
 
-  // Transferencia & Descarga
-  const [transferTarget, setTransferTarget] = useState<{ path: string; isDirectory: boolean } | null>(null);
+  // Backup & Descarga
+  const [backupTarget, setBackupTarget] = useState<{ path: string } | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadingMsg, setDownloadingMsg] = useState<string | null>(null);
 
@@ -107,7 +106,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     }
   };
 
-  // Descarga directa al navegador vía MinIO
+  // Descarga directa al navegador
   const triggerBrowserDownload = async (targetPath: string, isDirectory: boolean, multiplePaths?: string[]) => {
     setIsDownloading(true);
     setError(null);
@@ -186,7 +185,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                 Explorador de Archivos y Carpetas
               </h3>
               <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>
-                Navegación en tiempo real, descargas directas a tu PC y transferencias MinIO S3
+                Navegación en tiempo real, descargas directas y generación de copias de seguridad
               </p>
             </div>
           </div>
@@ -214,6 +213,17 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
             Actualizar
           </button>
 
+          {/* Botón Crear Copia de Seguridad */}
+          <button
+            onClick={() => setBackupTarget({ path: currentPath })}
+            className="btn btn-primary btn-sm"
+            disabled={loading || isDownloading || !isOnline}
+            title="Crear copia de seguridad de esta carpeta"
+            style={{ background: "#10b981", borderColor: "#10b981", color: "#ffffff", fontWeight: 600 }}
+          >
+            <span>💾</span> Hacer Copia de Seguridad
+          </button>
+
           {/* Botón Descargar Carpeta Actual Completa */}
           <button
             onClick={() => triggerBrowserDownload(currentPath, true)}
@@ -222,16 +232,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
             title="Descargar toda la carpeta actual comprimida en .tar.gz a tu equipo"
             style={{ color: "#34d399", borderColor: "rgba(52, 211, 153, 0.3)" }}
           >
-            <span>⬇️</span> Descargar Carpeta Actual
-          </button>
-
-          <button
-            onClick={() => setTransferTarget({ path: currentPath, isDirectory: true })}
-            className="btn btn-primary btn-sm"
-            disabled={loading || isDownloading || !isOnline}
-            title="Transferir todo el directorio actual a otro droplet o servidor"
-          >
-            <span>🚀</span> Transferir Carpeta Actual
+            <span>⬇️</span> Descargar Carpeta
           </button>
         </div>
       </div>
@@ -422,7 +423,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                 <th style={{ width: "110px" }}>TAMAÑO</th>
                 <th style={{ width: "100px" }}>PERMISOS</th>
                 <th style={{ width: "170px" }}>MODIFICADO</th>
-                <th style={{ width: "210px", textAlign: "right" }}>ACCIONES</th>
+                <th style={{ width: "230px", textAlign: "right" }}>ACCIONES</th>
               </tr>
             </thead>
             <tbody>
@@ -470,28 +471,34 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     {/* Acciones por fila */}
                     <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: "inline-flex", gap: 6 }}>
+                        {/* Botón Copia de Seguridad */}
+                        <button
+                          onClick={() => setBackupTarget({ path: item.path })}
+                          className="btn-transfer-row"
+                          style={{
+                            background: "rgba(16, 185, 129, 0.12)",
+                            borderColor: "rgba(16, 185, 129, 0.35)",
+                            color: "#34d399",
+                            fontWeight: 600,
+                          }}
+                          title="Crear copia de seguridad de este elemento"
+                        >
+                          <span>💾</span> Crear Copia
+                        </button>
+
                         {/* Botón Descarga directa al navegador */}
                         <button
                           onClick={() => triggerBrowserDownload(item.path, item.isDirectory)}
                           className="btn-transfer-row"
                           style={{
-                            background: "rgba(16, 185, 129, 0.12)",
-                            borderColor: "rgba(16, 185, 129, 0.35)",
-                            color: "#34d399"
+                            background: "rgba(56, 189, 248, 0.12)",
+                            borderColor: "rgba(56, 189, 248, 0.35)",
+                            color: "#38bdf8"
                           }}
                           disabled={isDownloading}
                           title={item.isDirectory ? "Descargar esta carpeta comprimida en .tar.gz" : "Descargar este archivo a tu equipo"}
                         >
                           <span>⬇️</span> Descargar
-                        </button>
-
-                        {/* Botón Transferencia entre servidores */}
-                        <button
-                          onClick={() => setTransferTarget({ path: item.path, isDirectory: item.isDirectory })}
-                          className="btn-transfer-row"
-                          title="Transferir a otro droplet o servidor del cluster"
-                        >
-                          <span>🚀</span> Transferir
                         </button>
                       </div>
                     </td>
@@ -503,15 +510,13 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
         )}
       </div>
 
-      {/* Modal de Transferencia entre Servidores */}
-      {transferTarget && (
-        <TransferModal
-          isOpen={transferTarget !== null}
-          onClose={() => setTransferTarget(null)}
-          sourceMachineId={machineId}
-          sourceHostname={hostname}
-          sourcePath={transferTarget.path}
-          isDirectory={transferTarget.isDirectory}
+      {/* Modal de Copia de Seguridad */}
+      {backupTarget && (
+        <BackupModal
+          isOpen={backupTarget !== null}
+          onClose={() => setBackupTarget(null)}
+          initialMachineId={machineId}
+          initialPath={backupTarget.path}
         />
       )}
     </div>
