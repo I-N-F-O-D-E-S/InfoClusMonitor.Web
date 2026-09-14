@@ -21,7 +21,7 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
   onUpdated,
 }) => {
   const [installCommand, setInstallCommand] = useState<string>("");
-  const [downloadUrl, setDownloadUrl] = useState<string>("https://storageapi.mrapy.com/infoclus-releases/agent-package.tar.gz");
+  const [downloadUrl, setDownloadUrl] = useState<string>("https://s3-api.apps.mrapy.com/infoclus-releases/agent-package.tar.gz");
   const [targetVersion, setTargetVersion] = useState<string>("1.2.0");
   const [copiedCmd, setCopiedCmd] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -183,7 +183,7 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
               lineHeight: 1.4,
               userSelect: "all",
             }}>
-              {downloadUrl || "https://storageapi.mrapy.com/infoclus-releases/agent-package.tar.gz"}
+              {downloadUrl || "https://s3-api.apps.mrapy.com/infoclus-releases/agent-package.tar.gz"}
             </div>
           </div>
 
