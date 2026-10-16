@@ -10,6 +10,47 @@ interface BackupsListProps {
   showHeader?: boolean;
 }
 
+const RefreshIcon = ({ spinning }: { spinning?: boolean }) => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ animation: spinning ? "spin 0.8s linear infinite" : undefined }}
+  >
+    <path d="M21 2v6h-6"></path>
+    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+    <path d="M3 22v-6h6"></path>
+    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+  </svg>
+);
+
+const RestoreIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v5h5"></path>
+    <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v12"></path>
+    <polyline points="7 10 12 15 17 10"></polyline>
+    <path d="M5 21h14"></path>
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+
 export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader = true }) => {
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +103,7 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
   }, [machineId]);
 
   const handleDelete = async (backupId: string, fileName: string) => {
-    if (!window.confirm(`¿Estás seguro de eliminar permanentemente la copia de seguridad '${fileName}'?`)) {
+    if (!window.confirm(`¿Eliminar permanentemente la copia «${fileName}»?`)) {
       return;
     }
 
@@ -99,163 +140,155 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
     );
   }, [backups, searchFilter]);
 
+  const completedCount = backups.filter(
+    (b) => String(b.status).toLowerCase() === "completed" || b.status === 3
+  ).length;
+
   const renderStatusBadge = (status: any, errorMsg?: string) => {
     const s = String(status).toLowerCase();
     if (s === "pending" || s === "0") {
       return (
-        <span className="badge badge-info" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span className="badge badge-info">
           <span className="spinner-small" style={{ width: 12, height: 12 }}></span>
-          ⏳ En Cola / Iniciando...
+          En cola
         </span>
       );
     }
     if (s === "compressing" || s === "1" || s === "uploading" || s === "2") {
       return (
-        <span className="badge badge-info" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8" }}>
-          <span className="spinner-small" style={{ width: 12, height: 12, borderColor: "rgba(56, 189, 248, 0.3)", borderTopColor: "#38bdf8" }}></span>
-          🔵 Procesando / Generando copia...
+        <span className="badge badge-info" style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8" }}>
+          <span
+            className="spinner-small"
+            style={{ width: 12, height: 12, borderColor: "rgba(56, 189, 248, 0.3)", borderTopColor: "#38bdf8" }}
+          ></span>
+          Procesando
         </span>
       );
     }
     if (s === "completed" || s === "3") {
-      return (
-        <span className="badge badge-success" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
-          ✅ Guardado en Almacenamiento Seguro
-        </span>
-      );
+      return <span className="badge badge-success">Completado</span>;
     }
     return (
       <span className="badge badge-danger" title={errorMsg || "Error en copia"}>
-        ❌ Fallido
+        Fallido
       </span>
     );
   };
 
   return (
-    <div className="backups-container">
+    <div>
       {showHeader && (
-        <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div className="page-head">
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: "28px" }}>💾</span>
-              <div>
-                <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: "#f8fafc" }}>
-                  Copias de Seguridad
-                </h2>
-                <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>
-                  Respaldos y copias de seguridad de tus servidores con ejecución en segundo plano y restauración 1-clic
-                </p>
-              </div>
-            </div>
+            <h2 className="page-title">Copias de seguridad</h2>
+            <p className="page-sub">
+              {completedCount} {completedCount === 1 ? "respaldo disponible" : "respaldos disponibles"} · formato{" "}
+              <code className="mono">{"{FECHA}_{NOMBRE}.tar.gz"}</code>
+            </p>
           </div>
 
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <button onClick={fetchBackups} className="btn btn-secondary btn-sm" disabled={loading}>
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }}
-              >
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-              </svg>
+              <RefreshIcon spinning={loading} />
               Actualizar
             </button>
 
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="btn btn-primary btn-sm"
-              style={{ background: "#10b981", borderColor: "#10b981", color: "#ffffff", fontWeight: 600 }}
-            >
-              <span>➕</span> Nueva Copia de Seguridad
+            <button onClick={() => setIsModalOpen(true)} className="btn btn-primary btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Nueva copia
             </button>
           </div>
         </div>
       )}
 
-      {/* Banner de información de almacenamiento */}
-      <div style={{
-        background: "rgba(15, 23, 42, 0.6)",
-        border: "1px solid rgba(56, 189, 248, 0.2)",
-        borderRadius: "var(--radius-md)",
-        padding: "12px 18px",
-        marginBottom: 16,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: 12
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: "20px" }}>☁️</span>
-          <div>
-            <div style={{ fontSize: "13px", color: "#f8fafc", fontWeight: 600 }}>
-              Almacenamiento Seguro de Respaldos
-            </div>
-            <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-              Formato estandarizado: <code>{"{FECHA}_{NOMBRE}.tar.gz"}</code> — Descarga directa protegida y restauración 1-clic a cualquier nodo.
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <span className="badge badge-mono">
-            {backups.filter((b) => String(b.status).toLowerCase() === "completed" || b.status === 3).length} Respaldos Disponibles
-          </span>
-        </div>
-      </div>
-
-      {/* Barra de Filtro de Búsqueda */}
-      <div style={{ marginBottom: 16 }}>
-        <input
-          type="text"
-          className="form-input"
-          placeholder="🔍 Buscar por nombre de archivo {FECHA}_{NOMBRE}, servidor o ruta..."
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
-        />
-      </div>
-
-      {/* Alerta de Error */}
+      {/* Alerta de error */}
       {error && (
         <div className="alert-box" style={{ marginBottom: 16 }}>
-          <span>⚠️ {error}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Tabla de Copias de Seguridad */}
+      {/* Filtros */}
+      <div className="toolbar">
+        <div className="search-input-wrapper">
+          <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Buscar por archivo, servidor o ruta..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+          />
+        </div>
+        <span className="badge badge-mono">{filteredBackups.length} copias</span>
+      </div>
+
+      {/* Tabla */}
       <div className="explorer-table-wrapper">
         {loading ? (
           <div className="explorer-loading-state">
             <div className="auth-spinner"></div>
-            <p>Cargando lista de copias de seguridad...</p>
+            <p>Cargando copias de seguridad…</p>
           </div>
         ) : filteredBackups.length === 0 ? (
           <div className="explorer-empty-state">
-            <span style={{ fontSize: "36px" }}>💾</span>
-            <p>No se encontraron copias de seguridad registradas.</p>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="btn btn-primary btn-sm"
-              style={{ marginTop: 12, background: "#10b981", borderColor: "#10b981" }}
+            <div
+              style={{
+                width: 52,
+                height: 52,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: "var(--radius-md)",
+                background: "rgba(56, 189, 248, 0.08)",
+                border: "1px solid rgba(56, 189, 248, 0.22)",
+              }}
             >
-              <span>💾</span> Crear Primera Copia de Seguridad
-            </button>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <ellipse cx="12" cy="5" rx="8.5" ry="3"></ellipse>
+                <path d="M3.5 5v14c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3V5"></path>
+                <path d="M3.5 12c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3"></path>
+              </svg>
+            </div>
+            <h4 style={{ color: "#f8fafc", margin: "6px 0 2px", fontWeight: 700 }}>
+              {searchFilter ? "Ninguna copia coincide" : "Todavía no hay copias de seguridad"}
+            </h4>
+            <p style={{ color: "#64748b", margin: 0, fontSize: "0.85rem", maxWidth: 420 }}>
+              {searchFilter
+                ? "Prueba con otro nombre de archivo, servidor o ruta."
+                : "Crea la primera copia para respaldar una ruta de tus servidores."}
+            </p>
+            {!searchFilter && (
+              <button onClick={() => setIsModalOpen(true)} className="btn btn-primary btn-sm" style={{ marginTop: 14 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Crear copia
+              </button>
+            )}
           </div>
         ) : (
           <table className="explorer-table">
             <thead>
               <tr>
-                <th>ARCHIVO DE RESPALDO</th>
-                <th>SERVIDOR ORIGEN</th>
+                <th>ARCHIVO</th>
+                <th>SERVIDOR</th>
                 <th>RUTA RESPALDADA</th>
                 <th style={{ width: "120px" }}>TAMAÑO</th>
-                <th style={{ width: "240px" }}>ESTADO</th>
-                <th style={{ width: "160px" }}>FECHA</th>
-                <th style={{ width: "220px", textAlign: "right" }}>ACCIONES</th>
+                <th style={{ width: "200px" }}>ESTADO</th>
+                <th style={{ width: "170px" }}>FECHA</th>
+                <th style={{ width: "150px", textAlign: "right" }}>ACCIONES</th>
               </tr>
             </thead>
             <tbody>
@@ -268,14 +301,18 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
                     {/* Archivo */}
                     <td>
                       <div className="cell-name">
-                        <span className="file-icon">📦</span>
+                        <span className="file-icon" aria-hidden="true">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2z"></path>
+                          </svg>
+                        </span>
                         <div>
-                          <span className="file-name-text" style={{ fontWeight: 700, color: "#f8fafc" }}>
+                          <span className="file-name-text" style={{ fontWeight: 600, color: "#f8fafc" }}>
                             {b.fileName}
                           </span>
                           {b.customName && (
-                            <div style={{ fontSize: "11px", color: "#64748b" }}>
-                              Identificador: {b.customName}
+                            <div className="text-muted" style={{ fontSize: "0.75rem", marginTop: 2 }}>
+                              {b.customName}
                             </div>
                           )}
                         </div>
@@ -284,80 +321,65 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
 
                     {/* Servidor */}
                     <td>
-                      <span className="badge badge-mono">
-                        🖥️ {b.hostname}
-                      </span>
+                      <span className="badge badge-mono">{b.hostname}</span>
                     </td>
 
                     {/* Ruta */}
                     <td>
-                      <code style={{ fontSize: "12px", color: "#38bdf8" }}>{b.sourcePath}</code>
+                      <code className="mono" style={{ fontSize: "0.78rem", color: "#7dd3fc" }}>
+                        {b.sourcePath}
+                      </code>
                     </td>
 
                     {/* Tamaño */}
-                    <td className="cell-size mono">
-                      {b.sizeFormatted || "-"}
-                    </td>
+                    <td className="cell-size mono">{b.sizeFormatted || "—"}</td>
 
                     {/* Estado */}
                     <td>
                       {renderStatusBadge(b.status, b.errorMessage)}
                       {b.errorMessage && (
-                        <div style={{ fontSize: "11px", color: "#f87171", marginTop: 4 }}>
-                          {b.errorMessage}
-                        </div>
+                        <div style={{ fontSize: "0.72rem", color: "#fb7185", marginTop: 4 }}>{b.errorMessage}</div>
                       )}
                     </td>
 
                     {/* Fecha */}
                     <td className="cell-date mono">
-                      {b.createdAt ? new Date(b.createdAt).toLocaleString() : "-"}
+                      {b.createdAt ? new Date(b.createdAt).toLocaleString() : "—"}
                     </td>
 
                     {/* Acciones */}
                     <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", gap: 6 }}>
+                      <div className="row-actions">
                         {isCompleted && (
                           <>
                             <button
                               onClick={() => setRestoreModalBackup(b)}
-                              className="btn-transfer-row"
-                              style={{
-                                background: "rgba(56, 189, 248, 0.12)",
-                                borderColor: "rgba(56, 189, 248, 0.35)",
-                                color: "#38bdf8",
-                              }}
-                              title="Restaurar / Cargar esta copia de seguridad en un servidor Linux"
+                              className="icon-btn is-accent"
+                              aria-label="Restaurar"
+                              title="Restaurar esta copia en un servidor Linux"
                             >
-                              <span>🔄</span> Restaurar
+                              <RestoreIcon />
                             </button>
+
                             <button
                               onClick={() => handleDownload(b)}
-                              className="btn-transfer-row"
-                              style={{
-                                background: "rgba(16, 185, 129, 0.12)",
-                                borderColor: "rgba(16, 185, 129, 0.35)",
-                                color: "#34d399",
-                              }}
-                              title="Descargar archivo de respaldo .tar.gz a tu equipo"
+                              className="icon-btn is-success"
+                              aria-label="Descargar"
+                              title="Descargar el archivo .tar.gz a tu equipo"
                             >
-                              <span>⬇️</span> Descargar
+                              <DownloadIcon />
                             </button>
                           </>
                         )}
 
                         <button
                           onClick={() => handleDelete(b.backupId, b.fileName)}
-                          className="btn-transfer-row"
-                          style={{
-                            background: "rgba(239, 68, 68, 0.12)",
-                            borderColor: "rgba(239, 68, 68, 0.3)",
-                            color: "#f87171",
-                          }}
+                          className="icon-btn is-danger"
                           disabled={isDeleting}
-                          title="Eliminar copia de seguridad permanentemente"
+                          aria-label="Eliminar"
+                          title="Eliminar copia de seguridad"
                         >
-                          {isDeleting ? "..." : "🗑️"}
+                          {isDeleting ? <span className="spinner-small" style={{ width: 14, height: 14 }}></span> : <TrashIcon />}
                         </button>
                       </div>
                     </td>

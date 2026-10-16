@@ -18,20 +18,20 @@ interface CommandItem {
 const COMMAND_PRESETS: CommandItem[] = [
   // Generales
   { label: "uptime", cmd: "uptime", category: "general" },
-  { label: "df -h (Disco)", cmd: "df -h", category: "general" },
+  { label: "df -h (disco)", cmd: "df -h", category: "general" },
   { label: "free -m (RAM)", cmd: "free -m", category: "general" },
   { label: "uname -a", cmd: "uname -a", category: "general" },
-  
+
   // Backups
-  { label: "📦 Crear Backup /var/www", cmd: "tar -czvf /backup-$(date +%F).tar.gz /var/www /etc", category: "backup" },
-  { label: "📂 Listar Backups", cmd: "ls -lh /backup* /var/backups 2>/dev/null || ls -lh /", category: "backup" },
-  { label: "📊 Tamaño Backups", cmd: "du -sh /var/backups /backup* 2>/dev/null", category: "backup" },
-  { label: "🗄️ Backup MySQL Full", cmd: "mysqldump -u root -p --all-databases > /backup-db.sql", category: "backup" },
+  { label: "Crear backup /var/www", cmd: "tar -czvf /backup-$(date +%F).tar.gz /var/www /etc", category: "backup" },
+  { label: "Listar backups", cmd: "ls -lh /backup* /var/backups 2>/dev/null || ls -lh /", category: "backup" },
+  { label: "Tamaño de backups", cmd: "du -sh /var/backups /backup* 2>/dev/null", category: "backup" },
+  { label: "Backup MySQL full", cmd: "mysqldump -u root -p --all-databases > /backup-db.sql", category: "backup" },
 
   // Docker & Servicios
   { label: "docker ps", cmd: "docker ps", category: "docker" },
-  { label: "docker stats --no-stream", cmd: "docker stats --no-stream", category: "docker" },
-  { label: "systemctl failed", cmd: "systemctl --failed", category: "docker" },
+  { label: "docker stats", cmd: "docker stats --no-stream", category: "docker" },
+  { label: "servicios fallidos", cmd: "systemctl --failed", category: "docker" },
 
   // Diagnóstico
   { label: "Top 10 CPU", cmd: "ps aux --sort=-%cpu | head -n 10", category: "diag" },
@@ -45,6 +45,14 @@ const statusLabels: Record<string, string> = {
   [CommandStatus.Running]: "En ejecución",
   [CommandStatus.Pending]: "Pendiente",
   [CommandStatus.Sent]: "Enviado",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  all: "Todos",
+  general: "Básicos",
+  backup: "Backups",
+  docker: "Docker",
+  diag: "Diagnóstico",
 };
 
 function formatUptime(seconds: number): string {
@@ -76,6 +84,19 @@ function getMetricColor(percent: number): string {
   if (percent >= 65) return "#f59e0b";
   return "#38bdf8";
 }
+
+const CopyIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
 
 export default function MachineDetail() {
   const { id } = useParams<{ id: string }>();
@@ -232,9 +253,9 @@ export default function MachineDetail() {
 
   if (!machine) {
     return (
-      <div style={{ textAlign: "center", padding: "64px 0" }}>
-        <div className="auth-spinner" style={{ margin: "0 auto 16px" }}></div>
-        <p className="mono text-muted">Cargando telemetría del servidor...</p>
+      <div className="state-block">
+        <div className="auth-spinner"></div>
+        <p className="mono text-muted">Cargando telemetría del servidor…</p>
       </div>
     );
   }
@@ -248,39 +269,48 @@ export default function MachineDetail() {
     ? COMMAND_PRESETS
     : COMMAND_PRESETS.filter((c) => c.category === activeCategory);
 
+  const metrics = [
+    { label: "Uso de CPU", value: machine.cpuPercent || 0 },
+    { label: "Memoria RAM", value: machine.memoryPercent || 0 },
+    { label: "Disco principal", value: machine.diskPercent || 0 },
+  ];
+
   return (
     <div>
-      {/* Breadcrumb de navegación */}
+      {/* Breadcrumb */}
       <div className="breadcrumb mono">
-        <Link to="/">Servidores</Link>
+        <Link to="/">Nodos</Link>
         <span>/</span>
         <span style={{ color: "#ffffff" }}>{machine.name || machine.hostname}</span>
       </div>
 
-      {/* Encabezado Superior */}
-      <div className="section-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+      {/* Encabezado */}
+      <div className="page-head" style={{ alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           {!isEditingName ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <h2 style={{ fontSize: "1.6rem", fontWeight: 700 }}>{machine.name || machine.hostname}</h2>
+              <h2 className="page-title">{machine.name || machine.hostname}</h2>
               <button
                 onClick={() => {
                   setCustomName(machine.name || machine.hostname);
                   setIsEditingName(true);
                 }}
-                className="btn btn-secondary btn-sm"
-                style={{ padding: "3px 8px", fontSize: "11px" }}
-                title="Cambiar nombre del servidor"
+                className="icon-btn"
+                title="Cambiar el nombre del servidor"
+                aria-label="Renombrar"
               >
-                ✏️ Renombrar
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                </svg>
               </button>
             </div>
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
                 type="text"
-                className="search-input mono"
-                style={{ height: 38, padding: "4px 12px", fontSize: "0.95rem" }}
+                className="form-input mono"
+                style={{ height: 38, fontSize: "0.95rem", width: 220 }}
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 autoFocus
@@ -289,17 +319,10 @@ export default function MachineDetail() {
                   if (e.key === "Escape") setIsEditingName(false);
                 }}
               />
-              <button
-                onClick={handleSaveName}
-                className="btn btn-primary btn-sm"
-                disabled={isSavingName || !customName.trim()}
-              >
-                {isSavingName ? "Guardando..." : "Guardar"}
+              <button onClick={handleSaveName} className="btn btn-primary btn-sm" disabled={isSavingName || !customName.trim()}>
+                {isSavingName ? "Guardando…" : "Guardar"}
               </button>
-              <button
-                onClick={() => setIsEditingName(false)}
-                className="btn btn-secondary btn-sm"
-              >
+              <button onClick={() => setIsEditingName(false)} className="btn btn-secondary btn-sm">
                 Cancelar
               </button>
             </div>
@@ -307,7 +330,7 @@ export default function MachineDetail() {
 
           <span className={`badge ${isOnline ? "badge-online" : "badge-offline"}`}>
             <span className={`pulse-dot ${isOnline ? "" : "disconnected"}`}></span>
-            {isOnline ? "EN LÍNEA" : "DESCONECTADO"}
+            {isOnline ? "EN LÍNEA" : "OFFLINE"}
           </span>
           <span className="badge badge-mono">{machine.os || "Linux"}</span>
         </div>
@@ -326,194 +349,187 @@ export default function MachineDetail() {
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              style={{ animation: refreshing ? "spin 0.8s linear infinite" : "none" }}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ animation: refreshing ? "spin 0.8s linear infinite" : undefined }}
             >
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              <path d="M21 2v6h-6"></path>
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+              <path d="M3 22v-6h6"></path>
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
             </svg>
-            {refreshing ? "Solicitando..." : "Actualizar"}
+            {refreshing ? "Solicitando…" : "Telemetría"}
           </button>
           <button
             onClick={() => setShowUpdateModal(true)}
-            className="btn btn-primary btn-sm"
-            title="Actualizar agente en este servidor"
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
+            className="btn btn-secondary btn-sm"
+            title="Actualizar el agente en este servidor"
           >
-            <span>🚀</span> Actualizar Agente
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3v12"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <path d="M5 21h14"></path>
+            </svg>
+            Agente
           </button>
           <button onClick={() => setShowDelete(!showDelete)} className="btn btn-danger btn-sm">
-            Eliminar Nodo
+            Eliminar
           </button>
         </div>
       </div>
 
-      {/* Caja de Confirmación de Eliminación */}
+      {/* Confirmación de eliminación */}
       {showDelete && (
-        <div className="card" style={{ borderColor: "#ef4444", marginBottom: 24, background: "#1c1013" }}>
+        <div
+          className="modal-section"
+          style={{ borderColor: "rgba(244, 63, 94, 0.35)", background: "rgba(244, 63, 94, 0.06)", marginBottom: 22 }}
+        >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
             <div>
-              <h4 style={{ color: "#f87171" }}>¿Eliminar este servidor del cluster?</h4>
-              <p className="text-muted" style={{ fontSize: "0.85rem", marginTop: 2 }}>
-                Esto eliminará a <strong>{machine.hostname}</strong> de la consola de control.
+              <h4 style={{ color: "#fb7185", fontSize: "0.95rem" }}>¿Eliminar este servidor del clúster?</h4>
+              <p className="text-muted" style={{ fontSize: "0.82rem", marginTop: 2 }}>
+                Quitará a <strong>{machine.hostname}</strong> de la consola de control.
               </p>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={handleDelete} className="btn btn-danger btn-sm">Confirmar Eliminación</button>
+              <button onClick={handleDelete} className="btn btn-danger btn-sm">Confirmar</button>
               <button onClick={() => setShowDelete(false)} className="btn btn-secondary btn-sm">Cancelar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Especificaciones de Red y Hardware */}
-      <div className="card" style={{ marginBottom: 24 }}>
+      {/* Red y hardware */}
+      <div className="card" style={{ marginBottom: 22 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 18 }}>
           <div>
-            <div className="stat-label">HOSTNAME NATIVO</div>
-            <div className="mono" style={{ fontSize: "0.9rem", color: "#ffffff", marginTop: 4, fontWeight: 600 }}>
+            <div className="stat-label">Hostname nativo</div>
+            <div className="mono" style={{ fontSize: "0.88rem", color: "#ffffff", marginTop: 5, fontWeight: 600 }}>
               {machine.hostname}
             </div>
           </div>
 
           <div>
-            <div className="stat-label">IP PÚBLICA (INTERNET)</div>
-            <div
-              className="mono"
-              style={{ fontSize: "0.95rem", fontWeight: 600, color: "#38bdf8", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
+            <div className="stat-label">IP pública</div>
+            <button
+              className="ip-cell is-public"
+              style={{ marginTop: 5 }}
               onClick={() => handleCopy(publicIp, "pubIp")}
-              title="Clic para copiar IP pública"
+              title="Copiar IP pública"
             >
               <span>{publicIp}</span>
-              <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 5px" }}>
-                {copiedText === "pubIp" ? "✓ COPIADO" : "COPY"}
+              <span className={`ip-copy ${copiedText === "pubIp" ? "copied" : ""}`}>
+                {copiedText === "pubIp" ? <CheckIcon /> : <CopyIcon />}
               </span>
-            </div>
+            </button>
           </div>
 
           <div>
-            <div className="stat-label">IP PRIVADA (LAN)</div>
-            <div
-              className="mono"
-              style={{ fontSize: "0.95rem", fontWeight: 600, color: "#a1a1aa", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
+            <div className="stat-label">IP privada</div>
+            <button
+              className="ip-cell"
+              style={{ marginTop: 5 }}
               onClick={() => handleCopy(privateIp, "privIp")}
-              title="Clic para copiar IP privada"
+              title="Copiar IP privada"
             >
               <span>{privateIp}</span>
-              <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 5px" }}>
-                {copiedText === "privIp" ? "✓ COPIADO" : "COPY"}
+              <span className={`ip-copy ${copiedText === "privIp" ? "copied" : ""}`}>
+                {copiedText === "privIp" ? <CheckIcon /> : <CopyIcon />}
               </span>
-            </div>
+            </button>
           </div>
 
           <div>
-            <div className="stat-label">TIEMPO ACTIVO (UPTIME)</div>
-            <div className="mono" style={{ fontSize: "0.95rem", color: "#ffffff", marginTop: 4, fontWeight: 600 }}>
+            <div className="stat-label">Tiempo activo</div>
+            <div className="mono" style={{ fontSize: "0.9rem", color: "#ffffff", marginTop: 5, fontWeight: 600 }}>
               {formatUptime(machine.uptime)}
             </div>
           </div>
 
           <div>
-            <div className="stat-label">EXTERNAL MACHINE ID</div>
-            <div
-              className="mono"
-              style={{ fontSize: "0.8rem", color: "#ffffff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}
+            <div className="stat-label">Machine ID</div>
+            <button
+              className="ip-cell"
+              style={{ marginTop: 5 }}
               onClick={() => handleCopy(displayMachineId, "id")}
-              title="Clic para copiar ID"
+              title="Copiar ID"
             >
-              <span>{displayMachineId.length > 16 ? `${displayMachineId.substring(0, 14)}...` : displayMachineId}</span>
-              <span className="badge badge-mono" style={{ fontSize: "8px", padding: "1px 5px" }}>
-                {copiedText === "id" ? "✓ COPIADO" : "COPY"}
+              <span style={{ fontSize: "0.78rem" }}>
+                {displayMachineId.length > 18 ? `${displayMachineId.substring(0, 16)}…` : displayMachineId}
               </span>
-            </div>
+              <span className={`ip-copy ${copiedText === "id" ? "copied" : ""}`}>
+                {copiedText === "id" ? <CheckIcon /> : <CopyIcon />}
+              </span>
+            </button>
           </div>
         </div>
 
-        {/* Medidores de Recursos en Tiempo Real */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 24 }}>
-          <div className="card" style={{ background: "#0c0c12", padding: "18px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="stat-label">USO DE CPU</span>
-              <span className="mono" style={{ fontSize: "1.3rem", fontWeight: 700, color: getMetricColor(machine.cpuPercent || 0) }}>
-                {machine.cpuPercent?.toFixed(1) || 0}%
-              </span>
+        {/* Medidores */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 22 }}>
+          {metrics.map((mt) => (
+            <div key={mt.label} style={{ background: "#0c0c12", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="stat-label">{mt.label}</span>
+                <span className="mono" style={{ fontSize: "1.2rem", fontWeight: 700, color: getMetricColor(mt.value), lineHeight: 1 }}>
+                  {mt.value.toFixed(1)}%
+                </span>
+              </div>
+              <div className="metric-bar-bg" style={{ marginTop: 10, height: 6 }}>
+                <div
+                  className="metric-bar-fill"
+                  style={{ width: `${Math.min(100, Math.max(0, mt.value))}%`, background: getMetricColor(mt.value) }}
+                ></div>
+              </div>
             </div>
-            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6, background: "#1e1e2c" }}>
-              <div
-                className="metric-bar-fill"
-                style={{
-                  width: `${Math.min(100, Math.max(0, machine.cpuPercent || 0))}%`,
-                  background: getMetricColor(machine.cpuPercent || 0),
-                }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="card" style={{ background: "#0c0c12", padding: "18px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="stat-label">MEMORIA RAM</span>
-              <span className="mono" style={{ fontSize: "1.3rem", fontWeight: 700, color: getMetricColor(machine.memoryPercent || 0) }}>
-                {machine.memoryPercent?.toFixed(1) || 0}%
-              </span>
-            </div>
-            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6, background: "#1e1e2c" }}>
-              <div
-                className="metric-bar-fill"
-                style={{
-                  width: `${Math.min(100, Math.max(0, machine.memoryPercent || 0))}%`,
-                  background: getMetricColor(machine.memoryPercent || 0),
-                }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="card" style={{ background: "#0c0c12", padding: "18px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="stat-label">DISCO PRINCIPAL</span>
-              <span className="mono" style={{ fontSize: "1.3rem", fontWeight: 700, color: getMetricColor(machine.diskPercent || 0) }}>
-                {machine.diskPercent?.toFixed(1) || 0}%
-              </span>
-            </div>
-            <div className="metric-bar-bg" style={{ marginTop: 10, height: 6, background: "#1e1e2c" }}>
-              <div
-                className="metric-bar-fill"
-                style={{
-                  width: `${Math.min(100, Math.max(0, machine.diskPercent || 0))}%`,
-                  background: getMetricColor(machine.diskPercent || 0),
-                }}
-              ></div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Selector de Pestañas Principales */}
+      {/* Tabs */}
       <div className="main-tabs-nav" style={{ marginBottom: 20 }}>
         <button
           type="button"
           className={`main-tab-btn ${activeMainTab === "terminal" ? "active" : ""}`}
           onClick={() => setActiveMainTab("terminal")}
         >
-          <span>📟</span> Consola & Comandos
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          Consola
         </button>
         <button
           type="button"
           className={`main-tab-btn ${activeMainTab === "files" ? "active" : ""}`}
           onClick={() => setActiveMainTab("files")}
         >
-          <span>📂</span> Explorador de Archivos
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          </svg>
+          Archivos
         </button>
         <button
           type="button"
           className={`main-tab-btn ${activeMainTab === "backups" ? "active" : ""}`}
           onClick={() => setActiveMainTab("backups")}
         >
-          <span>💾</span> Copias de Seguridad
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="5" rx="8.5" ry="3"></ellipse>
+            <path d="M3.5 5v14c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3V5"></path>
+            <path d="M3.5 12c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3"></path>
+          </svg>
+          Copias
         </button>
         <button
           type="button"
           className={`main-tab-btn ${activeMainTab === "scheduled" ? "active" : ""}`}
           onClick={() => setActiveMainTab("scheduled")}
         >
-          <span>⏰</span> Tareas Programadas
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <polyline points="12 7 12 12 15.5 14"></polyline>
+          </svg>
+          Tareas
         </button>
       </div>
 
@@ -527,247 +543,231 @@ export default function MachineDetail() {
 
       {activeMainTab === "backups" && (
         <div className="card">
-          <BackupsList
-            machineId={machine.externalMachineId || id || ""}
-            showHeader={true}
-          />
+          <BackupsList machineId={machine.externalMachineId || id || ""} showHeader={true} />
         </div>
       )}
 
       {activeMainTab === "scheduled" && (
         <div className="card">
-          <ScheduledTasksList
-            machineId={machine.externalMachineId || id || ""}
-            showHeader={true}
-          />
+          <ScheduledTasksList machineId={machine.externalMachineId || id || ""} showHeader={true} />
         </div>
       )}
 
       {activeMainTab === "terminal" && (
         <>
-          {/* Terminal Web & Ejecución Remota */}
-          <div className="terminal-card">
-        <div className="terminal-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="terminal-dots">
-              <div className="terminal-dot"></div>
-              <div className="terminal-dot"></div>
-              <div className="terminal-dot"></div>
-            </div>
-            <span className="mono" style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-              bash — {machine.name || machine.hostname} (IP: {publicIp})
-            </span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ padding: "3px 10px", fontSize: "11px" }}
-              onClick={() => setIsExpanded(!isExpanded)}
-              title={isExpanded ? "Cambiar a modo una línea" : "Expandir a editor multilínea"}
-            >
-              {isExpanded ? "⤡ Modo Normal" : "⤢ Modo Script"}
-            </button>
-            <span className="badge badge-mono" style={{ fontSize: "10px" }}>EJECUCIÓN REMOTA</span>
-          </div>
-        </div>
-
-        <div className="terminal-body">
-          {/* Selector de Categorías de Comandos */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-            <div className="stat-label">Comandos sugeridos y automatizaciones:</div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(["all", "general", "backup", "docker", "diag"] as const).map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setActiveCategory(cat)}
-                  className={`btn btn-sm ${activeCategory === cat ? "btn-primary" : "btn-secondary"}`}
-                  style={{ padding: "2px 8px", fontSize: "10px", textTransform: "capitalize" }}
-                >
-                  {cat === "all" ? "Todos" : cat === "backup" ? "Backups" : cat === "docker" ? "Docker" : cat === "diag" ? "Diagnóstico" : "Básicos"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Chips de Comandos */}
-          <div className="command-chips" style={{ marginTop: 6 }}>
-            {visiblePresets.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className="command-chip"
-                onClick={() => setLinuxCommand(item.cmd)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Entrada de Comandos */}
-          {!isExpanded ? (
-            <div className="terminal-input-wrapper">
-              <span className="terminal-prompt">$</span>
-              <input
-                type="text"
-                className="terminal-input"
-                placeholder="Escribe un comando Linux (ej. uptime, df -h, docker ps, tar -czvf backup.tar.gz /var/www)..."
-                value={linuxCommand}
-                onChange={(e) => setLinuxCommand(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendCommand();
-                  }
-                }}
-                disabled={sending}
-              />
-              <div className="terminal-actions">
-                {linuxCommand && (
-                  <button
-                    type="button"
-                    onClick={handleClearCommand}
-                    className="btn btn-secondary btn-sm"
-                    style={{ padding: "4px 8px", fontSize: "11px" }}
-                    title="Limpiar comando"
-                  >
-                    🧹 Limpiar
-                  </button>
-                )}
-                <button
-                  onClick={() => handleSendCommand()}
-                  className="btn btn-primary btn-sm"
-                  disabled={sending || !linuxCommand.trim()}
-                >
-                  {sending ? "Ejecutando..." : "Ejecutar"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="terminal-expanded-wrapper">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span className="mono text-muted" style={{ fontSize: "0.75rem" }}>
-                  Editor de script bash (Presiona <strong>Ctrl + Enter</strong> para ejecutar):
+          <div className="terminal-card" style={{ marginTop: 0 }}>
+            <div className="terminal-header">
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="terminal-dots">
+                  <div className="terminal-dot"></div>
+                  <div className="terminal-dot"></div>
+                  <div className="terminal-dot"></div>
+                </div>
+                <span className="mono" style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                  bash — {machine.name || machine.hostname} ({publicIp})
                 </span>
-                {linuxCommand && (
-                  <button
-                    type="button"
-                    onClick={handleClearCommand}
-                    className="btn btn-secondary btn-sm"
-                    style={{ padding: "2px 8px", fontSize: "11px" }}
-                    title="Limpiar editor"
-                  >
-                    🧹 Limpiar
-                  </button>
-                )}
               </div>
 
-              <textarea
-                className="terminal-textarea"
-                rows={6}
-                placeholder={`# Escribe o pega tu script bash aquí\necho "Iniciando mantenimiento..."\nuptime\ndf -h\nfree -m`}
-                value={linuxCommand}
-                onChange={(e) => setLinuxCommand(e.target.value)}
-                onKeyDown={(e) => {
-                  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-                    e.preventDefault();
-                    handleSendCommand();
-                  }
-                }}
-                disabled={sending}
-              />
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <button
                   type="button"
-                  onClick={() => setIsExpanded(false)}
                   className="btn btn-secondary btn-sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  title={isExpanded ? "Cambiar a modo de una línea" : "Expandir a editor multilínea"}
                 >
-                  Cerrar Editor
-                </button>
-                <button
-                  onClick={() => handleSendCommand()}
-                  className="btn btn-primary btn-sm"
-                  disabled={sending || !linuxCommand.trim()}
-                >
-                  {sending ? "Ejecutando script..." : "▶ Ejecutar Script"}
+                  {isExpanded ? "Modo línea" : "Modo script"}
                 </button>
               </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Historial de Ejecución */}
-      <div style={{ marginTop: 28 }}>
-        <div className="section-header" style={{ marginBottom: 14 }}>
-          <div className="section-title">
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Historial de Ejecución ({commands.length})</h3>
-            <p className="section-subtitle">Flujo de comandos ejecutados y resultados capturados en tiempo real</p>
-          </div>
-        </div>
-
-        {commands.length === 0 && (
-          <div className="card" style={{ textAlign: "center", padding: "36px 16px" }}>
-            <p className="mono text-muted">Aún no se han ejecutado comandos en este servidor.</p>
-          </div>
-        )}
-
-        {commands.map((cmd) => {
-          const isCompleted = cmd.status === CommandStatus.Completed || (cmd.status as unknown) === "Completed" || (cmd.status as unknown) === 3;
-          const isFailed = cmd.status === CommandStatus.Failed || (cmd.status as unknown) === "Failed" || (cmd.status as unknown) === 4;
-          const isRunning = cmd.status === CommandStatus.Running || (cmd.status as unknown) === "Running" || (cmd.status as unknown) === 2;
-
-          return (
-            <div key={cmd.id} className="command-history-item">
-              <div className="command-history-top">
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <span className="mono" style={{ fontWeight: 600, color: "#ffffff", fontSize: "0.85rem" }}>
-                    $ {cmd.parameters}
-                  </span>
-                  <span
-                    className="badge"
-                    style={{
-                      backgroundColor: isCompleted ? "rgba(16, 185, 129, 0.12)" : isFailed ? "rgba(239, 68, 68, 0.12)" : isRunning ? "rgba(245, 158, 11, 0.12)" : "#181822",
-                      color: isCompleted ? "#34d399" : isFailed ? "#f87171" : isRunning ? "#fbbf24" : "#a1a1aa",
-                      border: `1px solid ${isCompleted ? "rgba(16, 185, 129, 0.25)" : isFailed ? "rgba(239, 68, 68, 0.25)" : isRunning ? "rgba(245, 158, 11, 0.25)" : "#272738"}`,
-                    }}
-                  >
-                    {statusLabels[cmd.status] || cmd.status}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span className="mono text-muted" style={{ fontSize: "0.75rem" }}>
-                    {new Date(cmd.createdAt).toLocaleTimeString()}
-                  </span>
-                  {cmd.result && (
+            <div className="terminal-body">
+              {/* Categorías */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                <span className="stat-label">Comandos sugeridos</span>
+                <div className="segmented">
+                  {(["all", "general", "backup", "docker", "diag"] as const).map((cat) => (
                     <button
-                      onClick={() => handleCopy(cmd.result, String(cmd.id))}
-                      className="btn btn-secondary btn-sm"
-                      style={{ padding: "2px 8px", fontSize: "10px" }}
+                      key={cat}
+                      type="button"
+                      onClick={() => setActiveCategory(cat)}
+                      className={`segment ${activeCategory === cat ? "active" : ""}`}
+                      style={{ padding: "4px 10px", fontSize: "0.72rem" }}
                     >
-                      {copiedText === String(cmd.id) ? "✓ Copiado" : "Copiar Salida"}
+                      {CATEGORY_LABELS[cat]}
                     </button>
-                  )}
+                  ))}
                 </div>
               </div>
 
-              {cmd.result && (
-                <div className="command-output mono">
-                  {cmd.result}
+              {/* Chips */}
+              <div className="command-chips" style={{ marginTop: 6 }}>
+                {visiblePresets.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    className="command-chip"
+                    onClick={() => setLinuxCommand(item.cmd)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Entrada */}
+              {!isExpanded ? (
+                <div className="terminal-input-wrapper">
+                  <span className="terminal-prompt">$</span>
+                  <input
+                    type="text"
+                    className="terminal-input"
+                    placeholder="Escribe un comando Linux (uptime, df -h, docker ps…)"
+                    value={linuxCommand}
+                    onChange={(e) => setLinuxCommand(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendCommand();
+                      }
+                    }}
+                    disabled={sending}
+                  />
+                  <div className="terminal-actions">
+                    {linuxCommand && (
+                      <button
+                        type="button"
+                        onClick={handleClearCommand}
+                        className="btn btn-secondary btn-sm"
+                        title="Limpiar comando"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleSendCommand()}
+                      className="btn btn-primary btn-sm"
+                      disabled={sending || !linuxCommand.trim()}
+                    >
+                      {sending ? "Ejecutando…" : "Ejecutar"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="terminal-expanded-wrapper">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span className="mono text-muted" style={{ fontSize: "0.72rem" }}>
+                      Editor de script bash · <strong>Ctrl + Enter</strong> para ejecutar
+                    </span>
+                    {linuxCommand && (
+                      <button
+                        type="button"
+                        onClick={handleClearCommand}
+                        className="btn btn-secondary btn-sm"
+                        title="Limpiar editor"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+
+                  <textarea
+                    className="terminal-textarea"
+                    rows={6}
+                    placeholder={`# Escribe o pega tu script bash aquí\necho "Iniciando mantenimiento..."\nuptime\ndf -h\nfree -m`}
+                    value={linuxCommand}
+                    onChange={(e) => setLinuxCommand(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                        e.preventDefault();
+                        handleSendCommand();
+                      }
+                    }}
+                    disabled={sending}
+                  />
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 4 }}>
+                    <button type="button" onClick={() => setIsExpanded(false)} className="btn btn-secondary btn-sm">
+                      Cerrar editor
+                    </button>
+                    <button
+                      onClick={() => handleSendCommand()}
+                      className="btn btn-primary btn-sm"
+                      disabled={sending || !linuxCommand.trim()}
+                    >
+                      {sending ? "Ejecutando…" : "Ejecutar script"}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
+          </div>
+
+          {/* Historial */}
+          <div style={{ marginTop: 26 }}>
+            <div className="page-head" style={{ marginBottom: 14 }}>
+              <div>
+                <h3 className="page-title" style={{ fontSize: "1.15rem" }}>
+                  Historial de ejecución ({commands.length})
+                </h3>
+                <p className="page-sub">Comandos ejecutados y su salida, en tiempo real</p>
+              </div>
+            </div>
+
+            {commands.length === 0 && (
+              <div className="card state-block" style={{ padding: "36px 16px" }}>
+                <p className="mono text-muted">Todavía no se han ejecutado comandos en este servidor.</p>
+              </div>
+            )}
+
+            {commands.map((cmd) => {
+              const isCompleted = cmd.status === CommandStatus.Completed || (cmd.status as unknown) === "Completed" || (cmd.status as unknown) === 3;
+              const isFailed = cmd.status === CommandStatus.Failed || (cmd.status as unknown) === "Failed" || (cmd.status as unknown) === 4;
+              const isRunning = cmd.status === CommandStatus.Running || (cmd.status as unknown) === "Running" || (cmd.status as unknown) === 2;
+
+              return (
+                <div key={cmd.id} className="command-history-item">
+                  <div className="command-history-top">
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <span className="mono" style={{ fontWeight: 600, color: "#ffffff", fontSize: "0.82rem" }}>
+                        $ {cmd.parameters}
+                      </span>
+                      <span
+                        className="badge"
+                        style={{
+                          backgroundColor: isCompleted ? "rgba(16, 185, 129, 0.12)" : isFailed ? "rgba(244, 63, 94, 0.12)" : isRunning ? "rgba(245, 158, 11, 0.12)" : "#181822",
+                          color: isCompleted ? "#34d399" : isFailed ? "#fb7185" : isRunning ? "#fbbf24" : "#a1a1aa",
+                          border: `1px solid ${isCompleted ? "rgba(16, 185, 129, 0.25)" : isFailed ? "rgba(244, 63, 94, 0.25)" : isRunning ? "rgba(245, 158, 11, 0.25)" : "#272738"}`,
+                        }}
+                      >
+                        {statusLabels[cmd.status] || cmd.status}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span className="mono text-muted" style={{ fontSize: "0.72rem" }}>
+                        {new Date(cmd.createdAt).toLocaleTimeString()}
+                      </span>
+                      {cmd.result && (
+                        <button
+                          onClick={() => handleCopy(cmd.result, String(cmd.id))}
+                          className="icon-btn"
+                          title="Copiar salida"
+                          aria-label="Copiar salida"
+                        >
+                          {copiedText === String(cmd.id) ? <CheckIcon /> : <CopyIcon />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {cmd.result && <div className="command-output mono">{cmd.result}</div>}
+                </div>
+              );
+            })}
+          </div>
         </>
       )}
 
-      {/* Modal de Actualización de Agente */}
+      {/* Modal de agente */}
       {showUpdateModal && (
         <AgentUpdateModal
           isOpen={showUpdateModal}

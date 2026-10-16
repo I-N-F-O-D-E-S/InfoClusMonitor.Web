@@ -18,7 +18,7 @@ export const Login = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!usernameOrEmail.trim() || !password.trim()) {
-      setError("Por favor ingresa tu usuario/correo y contraseña.");
+      setError("Ingresa tu usuario y contraseña para continuar.");
       return;
     }
 
@@ -32,7 +32,7 @@ export const Login = () => {
       });
       navigate(from, { replace: true });
     } catch (err: any) {
-      const message = err.response?.data?.message || "Credenciales inválidas. Verifica los datos e intenta nuevamente.";
+      const message = err.response?.data?.message || "Usuario o contraseña incorrectos.";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -41,108 +41,98 @@ export const Login = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-box" style={{ maxWidth: "440px" }}>
-        <div className="auth-header" style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>
-            <img
-              src="/logo_completo.png"
-              alt="BuhoControl - Sistema de Gestión y Control Linux"
-              style={{
-                maxWidth: "100%",
-                height: "auto",
-                maxHeight: "140px",
-                objectFit: "contain",
-                borderRadius: "8px",
-                filter: "drop-shadow(0 0 16px rgba(56, 189, 248, 0.25))"
-              }}
-            />
+      <form className="auth-box" onSubmit={handleSubmit} noValidate>
+        <header className="auth-brand">
+          <img src="/logo_simple.png" alt="" className="auth-brand-mark" />
+          <div className="auth-brand-text">
+            <span className="auth-brand-name">BuhoControl</span>
+            <span className="auth-brand-desc">Control de servidores Linux</span>
           </div>
-          <p className="auth-subtitle" style={{ fontSize: "13px", color: "#94a3b8" }}>
-            Acceso seguro a la consola de gestión de servidores Linux
-          </p>
+        </header>
+
+        <div className="auth-heading">
+          <h1 className="auth-title">Iniciar sesión</h1>
+          <p className="auth-hint">Accede al panel de administración del clúster.</p>
         </div>
 
         {error && (
-          <div className="alert-box">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              <span>{error}</span>
-            </div>
+          <div className="alert-box auth-alert" role="alert">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="usernameOrEmail">
-              Usuario o Correo Electrónico
-            </label>
-            <input
-              id="usernameOrEmail"
-              type="text"
-              className="form-input mono"
-              placeholder="Ingresa tu usuario"
-              value={usernameOrEmail}
-              onChange={(e) => setUsernameOrEmail(e.target.value)}
-              disabled={isSubmitting}
-              autoComplete="username"
-              required
-            />
-          </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="usernameOrEmail">
+            Usuario o correo
+          </label>
+          <input
+            id="usernameOrEmail"
+            type="text"
+            className="form-input"
+            placeholder="usuario@servidor"
+            value={usernameOrEmail}
+            onChange={(e) => setUsernameOrEmail(e.target.value)}
+            disabled={isSubmitting}
+            autoComplete="username"
+            autoFocus
+          />
+        </div>
 
-          <div className="form-group">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <label className="form-label" htmlFor="password">
-                Contraseña
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "11px", cursor: "pointer" }}
-              >
-                {showPassword ? "Ocultar" : "Mostrar"}
-              </button>
-            </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="password">
+            Contraseña
+          </label>
+          <div className="input-with-action">
             <input
               id="password"
               type={showPassword ? "text" : "password"}
-              className="form-input mono"
+              className="form-input"
               placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isSubmitting}
               autoComplete="current-password"
-              required
             />
+            <button
+              type="button"
+              className="input-action"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <path d="M6.61 6.61A18.5 18.5 0 0 0 2 12s3 8 10 8a9.12 9.12 0 0 0 5.39-1.61"></path>
+                  <line x1="2" y1="2" x2="22" y2="22"></line>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12s3-8 10-8 10 8 10 8-3 8-10 8-10-8-10-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              )}
+            </button>
           </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: "100%", padding: "12px", marginTop: "10px", fontSize: "0.95rem" }}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="auth-spinner" style={{ width: 16, height: 16, borderWidth: 2 }}></span>
-                Autenticando...
-              </>
-            ) : (
-              "Ingresar a la Consola"
-            )}
-          </button>
-        </form>
-
-        <div className="auth-security-footer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-          <span>Conexión Segura TLS 1.3 · Encriptación JWT 256-bit</span>
         </div>
-      </div>
+
+        <button type="submit" className="btn btn-primary auth-submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <span className="auth-spinner" />
+              Verificando…
+            </>
+          ) : (
+            "Entrar"
+          )}
+        </button>
+      </form>
     </div>
   );
 };

@@ -10,6 +10,21 @@ interface BackupModalProps {
   onBackupStarted?: (backup: BackupRecord) => void;
 }
 
+const CloseIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+const ArchiveIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <ellipse cx="12" cy="5" rx="8.5" ry="3"></ellipse>
+    <path d="M3.5 5v14c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3V5"></path>
+    <path d="M3.5 12c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3"></path>
+  </svg>
+);
+
 export const BackupModal: React.FC<BackupModalProps> = ({
   isOpen,
   onClose,
@@ -54,7 +69,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, "0");
     const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-    const cleanName = (customName || "backup").replace(/[^a-zA-Z0-9_\-]/g, "_");
+    const cleanName = (customName || "backup").replace(/[^a-zA-Z0-9_-]/g, "_");
     return `${dateStr}_${cleanName}.tar.gz`;
   }, [customName]);
 
@@ -82,7 +97,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
         customName: customName.trim() || undefined,
       });
 
-      setSuccessMsg(`¡Copia de seguridad enviada a segundo plano! Se guardará como ${backup.fileName}`);
+      setSuccessMsg(`Copia en segundo plano. Se guardará como ${backup.fileName}`);
       if (onBackupStarted) {
         onBackupStarted(backup);
       }
@@ -98,187 +113,167 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   };
 
   const quickPaths = [
-    { label: "🌐 /var/www", path: "/var/www", name: "var_www" },
-    { label: "⚙️ /etc", path: "/etc", name: "etc_configs" },
-    { label: "🏠 /home", path: "/home", name: "home_users" },
-    { label: "👑 /root", path: "/root", name: "root_backup" },
-    { label: "📦 /opt", path: "/opt", name: "opt_apps" },
-    { label: "🗄️ /var/lib/mysql", path: "/var/lib/mysql", name: "mysql_data" },
+    { label: "/var/www", path: "/var/www", name: "var_www" },
+    { label: "/etc", path: "/etc", name: "etc_configs" },
+    { label: "/home", path: "/home", name: "home_users" },
+    { label: "/root", path: "/root", name: "root_backup" },
+    { label: "/opt", path: "/opt", name: "opt_apps" },
+    { label: "/var/lib/mysql", path: "/var/lib/mysql", name: "mysql_data" },
   ];
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-container" style={{ maxWidth: 580 }}>
-        {/* Header */}
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" style={{ maxWidth: 580 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "24px" }}>💾</span>
-            <div>
-              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#f8fafc" }}>
-                Crear Copia de Seguridad
-              </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>
-                Comprime y guarda la copia de seguridad de tu servidor de forma segura
-              </p>
-            </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+              Nueva copia de seguridad
+            </h3>
+            <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "#94a3b8" }}>
+              Comprime y guarda una ruta del servidor en el almacenamiento central
+            </p>
           </div>
-          <button onClick={onClose} className="btn-close-modal" disabled={loading}>
-            ✕
+          <button onClick={onClose} className="btn-close" disabled={loading} aria-label="Cerrar">
+            <CloseIcon />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
-          {error && (
-            <div className="alert-box">
-              <span>⚠️ {error}</span>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {error && (
+              <div className="alert-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>{error}</span>
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="alert-success">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            {/* Servidor */}
+            <div>
+              <label className="form-label" htmlFor="backup-server">Servidor origen</label>
+              <select
+                id="backup-server"
+                className="form-input"
+                value={selectedMachineId}
+                onChange={(e) => setSelectedMachineId(e.target.value)}
+                disabled={loading || Boolean(initialMachineId)}
+              >
+                <option value="">Selecciona un servidor…</option>
+                {machines.map((m) => (
+                  <option key={m.externalMachineId} value={m.externalMachineId}>
+                    {m.name || m.hostname} ({m.ipAddress || m.publicIpAddress || "sin IP"})
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
 
-          {successMsg && (
-            <div style={{
-              background: "rgba(16, 185, 129, 0.15)",
-              border: "1px solid #10b981",
-              borderRadius: "var(--radius-md)",
-              padding: "10px 14px",
-              color: "#34d399",
-              fontSize: "13px",
-              display: "flex",
-              alignItems: "center",
-              gap: 8
-            }}>
-              <span>✅</span>
-              <strong>{successMsg}</strong>
+            {/* Ruta */}
+            <div>
+              <label className="form-label" htmlFor="backup-path">Ruta de carpeta o archivo a respaldar</label>
+              <input
+                id="backup-path"
+                type="text"
+                className="form-input mono"
+                value={sourcePath}
+                onChange={(e) => {
+                  setSourcePath(e.target.value);
+                  const autoName = e.target.value.split("/").filter(Boolean).pop() || "backup";
+                  if (!customName || customName === "backup") {
+                    setCustomName(autoName);
+                  }
+                }}
+                placeholder="/var/www o /home/usuario/app"
+                disabled={loading}
+                required
+              />
             </div>
-          )}
 
-          {/* Servidor */}
-          <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#94a3b8", marginBottom: 6 }}>
-              SERVIDOR ORIGEN:
-            </label>
-            <select
-              className="form-input"
-              value={selectedMachineId}
-              onChange={(e) => setSelectedMachineId(e.target.value)}
-              disabled={loading || Boolean(initialMachineId)}
-            >
-              {machines.map((m) => (
-                <option key={m.externalMachineId} value={m.externalMachineId}>
-                  {m.name || m.hostname} ({m.ipAddress}) - {m.status === "Online" || m.status === 0 ? "🟢 En línea" : "🔴 Desconectado"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Ruta a respaldar */}
-          <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#94a3b8", marginBottom: 6 }}>
-              RUTA DE CARPETA O ARCHIVO A RESPALDAR:
-            </label>
-            <input
-              type="text"
-              className="form-input"
-              value={sourcePath}
-              onChange={(e) => {
-                setSourcePath(e.target.value);
-                const autoName = e.target.value.split("/").filter(Boolean).pop() || "backup";
-                if (!customName || customName === "backup") {
-                  setCustomName(autoName);
-                }
-              }}
-              placeholder="/var/www o /home/usuario/app"
-              disabled={loading}
-              required
-            />
-          </div>
-
-          {/* Atajos de Rutas Rápidas */}
-          <div>
-            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 6 }}>
-              Atajos Frecuentes:
-            </span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {quickPaths.map((qp) => (
-                <button
-                  type="button"
-                  key={qp.path}
-                  className="shortcut-pill"
-                  onClick={() => {
-                    setSourcePath(qp.path);
-                    setCustomName(qp.name);
-                  }}
-                  disabled={loading}
-                >
-                  {qp.label}
-                </button>
-              ))}
+            {/* Atajos */}
+            <div>
+              <span className="form-label">Rutas frecuentes</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {quickPaths.map((qp) => (
+                  <button
+                    type="button"
+                    key={qp.path}
+                    className={`shortcut-pill ${sourcePath === qp.path ? "active" : ""}`}
+                    onClick={() => {
+                      setSourcePath(qp.path);
+                      setCustomName(qp.name);
+                    }}
+                    disabled={loading}
+                  >
+                    {qp.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Nombre Identificador */}
-          <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#94a3b8", marginBottom: 6 }}>
-              NOMBRE IDENTIFICADOR DEL RESPALDO:
-            </label>
-            <input
-              type="text"
-              className="form-input"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder="ej. var_www o produccion_sitio"
-              disabled={loading}
-            />
-          </div>
+            {/* Nombre */}
+            <div>
+              <label className="form-label" htmlFor="backup-name">Nombre identificador</label>
+              <input
+                id="backup-name"
+                type="text"
+                className="form-input"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="ej. var_www o produccion_sitio"
+                disabled={loading}
+              />
+            </div>
 
-          {/* Banner de Previsualización */}
-          <div style={{
-            background: "rgba(30, 41, 59, 0.7)",
-            border: "1px solid rgba(56, 189, 248, 0.3)",
-            borderRadius: "var(--radius-md)",
-            padding: "12px 14px",
-            fontSize: "12px",
-            color: "#cbd5e1"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <span style={{ color: "#38bdf8", fontWeight: 700 }}>☁️ Almacenamiento:</span>
-              <span className="badge badge-info">Copia Centralizada</span>
+            {/* Resumen */}
+            <div className="modal-section">
+              <div className="modal-section-title" style={{ marginBottom: 10 }}>
+                <ArchiveIcon />
+                Resumen
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                <span className="text-muted" style={{ fontSize: "0.78rem" }}>Destino</span>
+                <span className="badge badge-info">Almacenamiento central</span>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <span className="text-muted" style={{ fontSize: "0.78rem" }}>Archivo resultante</span>
+                <div className="mono" style={{ color: "#f8fafc", fontWeight: 600, wordBreak: "break-all", fontSize: "0.8rem", marginTop: 3 }}>
+                  {previewFileName}
+                </div>
+              </div>
+              <p className="text-muted" style={{ fontSize: "0.72rem", marginTop: 10, lineHeight: 1.45 }}>
+                La copia se genera en segundo plano. Podrás descargarla o restaurarla al finalizar.
+              </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-              <span style={{ color: "#34d399", fontWeight: 700 }}>📦 Archivo resultante:</span>
-              <span style={{ fontFamily: "monospace", color: "#f8fafc", fontWeight: 600, wordBreak: "break-all" }}>
-                {previewFileName}
-              </span>
-            </div>
-            <div style={{ marginTop: 8, color: "#94a3b8", fontSize: "11px", lineHeight: "1.4" }}>
-              ⚡ La tarea se ejecutará en <strong>segundo plano</strong> de forma segura. Podrás monitorear el estado y descargar o restaurar el respaldo cuando termine.
-            </div>
-          </div>
 
-          {/* Footer Actions */}
-          <div className="modal-footer" style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={loading}>
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-              style={{ background: "#10b981", borderColor: "#10b981", color: "#ffffff", fontWeight: 600 }}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-small"></span>
-                  Iniciando en segundo plano...
-                </>
-              ) : (
-                <>
-                  <span>💾</span> Crear Copia de Seguridad
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+            <div className="modal-footer" style={{ marginTop: 0 }}>
+              <button type="button" onClick={onClose} className="btn btn-secondary" disabled={loading}>
+                Cancelar
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="spinner-small"></span>
+                    Iniciando…
+                  </>
+                ) : (
+                  "Crear copia"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
