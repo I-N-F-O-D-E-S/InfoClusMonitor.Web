@@ -1022,74 +1022,128 @@ body {
    LOGIN / AUTH
    ========================================================================== */
 
+/* ---- Layout: identidad (izq) + formulario (der) ---- */
 .auth-page {
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
-  place-items: center;
-  padding: 24px;
+  grid-template-columns: minmax(360px, 46%) 1fr;
+  background: var(--bg-app);
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+
+.auth-aside {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 48px 44px;
+  border-right: 1px solid var(--border-subtle);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(56, 189, 248, 0.10) 0%, transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(129, 140, 248, 0.08) 0%, transparent 60%),
+    #0b0b12;
+}
+
+.auth-aside-mark {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.auth-aside-mark img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.auth-aside-mark span {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.auth-aside-copy {
+  max-width: 420px;
+}
+
+.auth-aside-copy h2 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.auth-aside-copy p {
+  margin-top: 14px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.auth-aside-foot {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+/* ---- Panel del formulario ---- */
+.auth-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .auth-box {
   width: 100%;
-  max-width: 420px;
-  background: rgba(15, 15, 23, 0.82);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: var(--radius-xl);
-  padding: 34px 34px 32px;
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  z-index: 2;
-}
-
-/* Restrained, staggered entrance — content rises into place once */
-.auth-box > * {
-  animation: authRise 420ms var(--ease-out) backwards;
-}
-.auth-box > *:nth-child(1) { animation-delay: 30ms; }
-.auth-box > *:nth-child(2) { animation-delay: 80ms; }
-.auth-box > *:nth-child(3) { animation-delay: 130ms; }
-.auth-box > *:nth-child(4) { animation-delay: 180ms; }
-.auth-box > *:nth-child(5) { animation-delay: 230ms; }
-
-@keyframes authRise {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.auth-brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  margin-bottom: 30px;
-}
-
-.auth-brand-mark {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.auth-brand-text {
+  max-width: 360px;
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
 }
 
-.auth-brand-name {
+/* Marca compacta — sólo cuando se oculta el panel lateral */
+.auth-box-brand {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.auth-box-brand img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.auth-box-brand span {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #ffffff;
 }
 
-.auth-brand-desc {
-  font-size: 0.74rem;
-  color: var(--text-muted);
+/* Entrada escalonada, contenida */
+.auth-box > * {
+  animation: authRise 420ms var(--ease-out) backwards;
+}
+.auth-box > *:nth-child(1) { animation-delay: 30ms; }
+.auth-box > *:nth-child(2) { animation-delay: 70ms; }
+.auth-box > *:nth-child(3) { animation-delay: 110ms; }
+.auth-box > *:nth-child(4) { animation-delay: 150ms; }
+.auth-box > *:nth-child(5) { animation-delay: 190ms; }
+.auth-box > *:nth-child(6) { animation-delay: 230ms; }
+
+@keyframes authRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .auth-heading {
@@ -1097,16 +1151,16 @@ body {
 }
 
 .auth-title {
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   color: #ffffff;
 }
 
 .auth-hint {
   font-size: 0.86rem;
   color: var(--text-secondary);
-  margin-top: 5px;
+  margin-top: 6px;
 }
 
 .form-group {
@@ -1146,22 +1200,56 @@ body {
   background: #0c0c12;
 }
 
-/* Password reveal */
-.input-with-action {
+/* Campos específicos del login (no afectan a los modales) */
+.auth-box .form-input {
+  height: 44px;
+  padding: 0 14px;
+  background: #0a0a0f;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.auth-box .form-input:hover:not(:disabled) {
+  border-color: var(--border-subtle-hover);
+}
+
+.auth-box .form-input:focus {
+  border-color: var(--color-brand);
+  background: #0c0c13;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.16);
+}
+
+/* Chrome autofill sobre fondo oscuro: evita el parche amarillo/blanco */
+.auth-box .form-input:-webkit-autofill,
+.auth-box .form-input:-webkit-autofill:hover,
+.auth-box .form-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px #0a0a0f inset;
+  caret-color: #ffffff;
+}
+
+.auth-box .form-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Reveal de contraseña */
+.auth-input-wrap {
   position: relative;
 }
 
-.input-with-action .form-input {
+.auth-input-wrap .form-input {
   padding-right: 44px;
 }
 
-.input-action {
+.auth-reveal {
   position: absolute;
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   background: transparent;
@@ -1173,32 +1261,62 @@ body {
               background var(--duration-fast) var(--ease-out);
 }
 
-.input-action:hover {
+.auth-reveal:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.06);
 }
 
-.input-action:active {
-  transform: translateY(-50%) scale(0.94);
+.auth-reveal:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.auth-reveal:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5);
+}
+
+/* Aviso de Bloq Mayús */
+.auth-caps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--color-warning);
+}
+
+.auth-caps svg {
+  flex-shrink: 0;
 }
 
 .auth-submit {
   width: 100%;
-  padding: 12px;
-  margin-top: 8px;
+  height: 44px;
+  margin-top: 6px;
   font-size: 0.92rem;
+}
+
+.auth-submit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
 }
 
 .auth-alert {
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  animation: authAlertIn 200ms var(--ease-out);
 }
 
 .auth-alert svg {
   flex-shrink: 0;
   margin-top: 1px;
+}
+
+@keyframes authAlertIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .alert-box, .alert-error {
@@ -1807,6 +1925,19 @@ button, a, input, select, textarea, .nav-link, .shortcut-pill, .command-chip, .b
     padding-top: 8px;
     border-top: 1px solid var(--border-subtle);
   }
+
+  /* Login: colapsa a una sola columna y muestra la marca compacta */
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-aside {
+    display: none;
+  }
+
+  .auth-box-brand {
+    display: flex;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1898,10 +2029,6 @@ button, a, input, select, textarea, .nav-link, .shortcut-pill, .command-chip, .b
     margin: 10px;
     max-height: 90vh;
     overflow-y: auto;
-  }
-
-  .auth-box {
-    padding: 28px 20px;
   }
 }
 
@@ -2145,6 +2272,7 @@ button, a, input, select, textarea, .nav-link, .shortcut-pill, .command-chip, .b
 
 @media (prefers-reduced-motion: reduce) {
   .auth-box > *,
+  .auth-alert,
   .modal-overlay,
   .modal-content,
   .modal-card {
