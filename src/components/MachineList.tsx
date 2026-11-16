@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { getMachines } from "../services/api";
 import { signalRService } from "../services/signalr";
 import { AgentUpdateModal } from "./AgentUpdateModal";
+import { TableSkeleton } from "./Loading";
+import { parseUtcDate } from "../utils/datetime";
 import type { Machine } from "../types";
 import { MachineStatus } from "../types";
 
@@ -22,7 +24,8 @@ function isMachineOnline(m: Machine): boolean {
     return true;
   }
   if (m.lastHeartbeat) {
-    const diffMs = Date.now() - new Date(m.lastHeartbeat).getTime();
+    const heartbeat = parseUtcDate(m.lastHeartbeat);
+    const diffMs = heartbeat ? Date.now() - heartbeat.getTime() : NaN;
     if (diffMs >= 0 && diffMs < 60000) {
       return true;
     }
@@ -31,9 +34,9 @@ function isMachineOnline(m: Machine): boolean {
 }
 
 function getProgressColor(percent: number): string {
-  if (percent >= 85) return "#ef4444";
-  if (percent >= 65) return "#f59e0b";
-  return "#38bdf8";
+  if (percent >= 85) return "#dc2626";
+  if (percent >= 65) return "#d97706";
+  return "#1e40af";
 }
 
 const CopyIcon = () => (
@@ -232,9 +235,8 @@ export default function MachineList() {
 
       {/* Cargando */}
       {isLoading && (
-        <div className="state-block">
-          <div className="auth-spinner"></div>
-          <p className="mono text-muted">Sincronizando nodos del clúster…</p>
+        <div className="table-container">
+          <TableSkeleton rows={6} cols={5} />
         </div>
       )}
 
@@ -248,15 +250,15 @@ export default function MachineList() {
               display: "grid",
               placeItems: "center",
               borderRadius: "var(--radius-md)",
-              background: "rgba(56, 189, 248, 0.08)",
-              border: "1px solid rgba(56, 189, 248, 0.22)",
+              background: "rgba(59, 130, 246, 0.08)",
+              border: "1px solid rgba(59, 130, 246, 0.22)",
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="2">
               <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
             </svg>
           </div>
-          <h3 style={{ color: "#ffffff", fontSize: "1.15rem", fontWeight: 700 }}>
+          <h3 style={{ color: "#0a0a0a", fontSize: "1.15rem", fontWeight: 700 }}>
             {search || statusFilter !== "TODOS" ? "Ningún servidor coincide" : "Todavía no hay nodos"}
           </h3>
           <p className="text-muted" style={{ maxWidth: 420, fontSize: "0.9rem" }}>
@@ -319,7 +321,7 @@ export default function MachineList() {
                     {/* Nombre y hostname */}
                     <td>
                       <Link to={`/machines/${targetId}`} style={{ textDecoration: "none" }}>
-                        <div style={{ fontWeight: 600, color: "#ffffff", fontSize: "0.95rem" }}>
+                        <div style={{ fontWeight: 600, color: "#0a0a0a", fontSize: "0.95rem" }}>
                           {m.name || m.hostname}
                         </div>
                         {m.name && m.name !== m.hostname && (

@@ -12,7 +12,9 @@ import type {
   RequestDownloadDto,
   DownloadResultDto,
   BackupRecord,
-  CreateBackupDto
+  CreateBackupDto,
+  OracleDatabase,
+  OracleBackup
 } from "../types";
 
 const runtimeApiUrl = (typeof window !== "undefined" && (window as any)._env_?.VITE_API_URL) 
@@ -132,7 +134,7 @@ export async function getInstallCommand(): Promise<{ packageAvailable: boolean; 
   return data;
 }
 
-export async function uploadAgentReleaseBundle(agentFile: File, installFile: File): Promise<{ message: string; installCommand: string; downloadUrl: string; agentSize: number; installSize: number }> {
+export async function uploadAgentReleaseBundle(agentFile: File, installFile: File): Promise<{ message: string; installCommand: string; downloadUrl: string; targetVersion?: string; agentSize: number; installSize: number }> {
   const formData = new FormData();
   formData.append("agentFile", agentFile);
   formData.append("installFile", installFile);
@@ -222,4 +224,31 @@ export async function runScheduledTaskNow(id: string): Promise<{ message: string
 
 export async function deleteScheduledTask(id: string): Promise<void> {
   await api.delete(`/scheduledtasks/${id}`);
+}
+
+// Oracle: discovery de instancias y backups (Data Pump → MinIO)
+export async function getOracleDatabases(machineId?: string): Promise<OracleDatabase[]> {
+  const params = machineId ? { machineId } : {};
+  const { data } = await api.get<OracleDatabase[]>("/oracle/databases", { params });
+  return data;
+}
+
+export async function discoverOracle(machineId: string): Promise<OracleDatabase[]> {
+  const { data } = await api.post<OracleDatabase[]>("/oracle/discover", { machineId });
+  return data;
+}
+
+export async function getOracleBackups(machineId?: string): Promise<OracleBackup[]> {
+  const params = machineId ? { machineId } : {};
+  const { data } = await api.get<OracleBackup[]>("/oracle/backups", { params });
+  return data;
+}
+
+export async function createOracleBackup(machineId: string, sid?: string): Promise<OracleBackup[]> {
+  const { data } = await api.post<OracleBackup[]>("/oracle/backups", { machineId, sid });
+  return data;
+}
+
+export async function deleteOracleBackup(id: string | number): Promise<void> {
+  await api.delete(`/oracle/backups/${id}`);
 }

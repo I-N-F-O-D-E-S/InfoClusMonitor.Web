@@ -1,5 +1,5 @@
 import * as signalR from "@microsoft/signalr";
-import type { Machine, Command, FileTransfer, DirectoryContent, BackupRecord } from "../types";
+import type { Machine, Command, FileTransfer, DirectoryContent, BackupRecord, OracleDatabase, OracleBackup } from "../types";
 
 type MachineCallback = (machine: Machine) => void;
 type MachineDeletedCallback = (id: string) => void;
@@ -102,6 +102,22 @@ class SignalRService {
 
   onBackupDeleted(cb: (backupId: string) => void) {
     this.connection?.on("BackupDeleted", cb);
+  }
+
+  onOracleDatabasesUpdated(cb: (databases: OracleDatabase[]) => void) {
+    this.connection?.on("OracleDatabasesUpdated", cb);
+  }
+
+  onOracleBackupCreated(cb: (backup: OracleBackup) => void) {
+    this.connection?.on("OracleBackupCreated", cb);
+  }
+
+  onOracleBackupUpdated(cb: (backup: OracleBackup) => void) {
+    this.connection?.on("OracleBackupUpdated", cb);
+  }
+
+  onOracleBackupDeleted(cb: (backupId: string) => void) {
+    this.connection?.on("OracleBackupDeleted", cb);
   }
 
   onScheduledTaskCreated(cb: (task: import("../types").ScheduledTask) => void) {

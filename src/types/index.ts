@@ -256,5 +256,45 @@ export interface ScheduledTaskExecution {
   durationFormatted: string;
 }
 
+export const OracleBackupStatus = {
+  Pending: "Pending",
+  Running: "Running",
+  Completed: "Completed",
+  Failed: "Failed",
+} as const;
+export type OracleBackupStatus = (typeof OracleBackupStatus)[keyof typeof OracleBackupStatus] | 0 | 1 | 2 | 3;
+
+export interface OracleDatabase {
+  id: number;
+  machineId: string;
+  hostname: string;
+  sid: string;
+  oracleHome: string;
+  version: string;
+  status: string;
+  osUser: string;
+  lastDiscoveredAt: string;
+}
+
+export interface OracleBackup {
+  id: number;
+  backupId: string;
+  machineId: string;
+  hostname: string;
+  sid: string;
+  fileName: string;
+  minioBucket: string;
+  minioObjectName: string;
+  status: OracleBackupStatus;
+  sizeBytes: number;
+  sizeFormatted: string;
+  errorMessage?: string;
+  logExcerpt?: string;
+  createdAt: string;
+  completedAt?: string;
+  downloadUrl?: string;
+}
+
+
 
 

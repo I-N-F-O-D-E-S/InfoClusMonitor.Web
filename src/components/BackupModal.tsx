@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { getMachines, createBackup } from "../services/api";
 import type { Machine, BackupRecord } from "../types";
+import { paraguayFileStamp } from "../utils/datetime";
 
 interface BackupModalProps {
   isOpen: boolean;
@@ -66,9 +67,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
   // Preview del nombre en tiempo real {FECHA}_{NOMBRE}.tar.gz
   const previewFileName = useMemo(() => {
-    const now = new Date();
-    const pad = (n: number) => n.toString().padStart(2, "0");
-    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const dateStr = paraguayFileStamp();
     const cleanName = (customName || "backup").replace(/[^a-zA-Z0-9_-]/g, "_");
     return `${dateStr}_${cleanName}.tar.gz`;
   }, [customName]);
@@ -126,7 +125,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
       <div className="modal-content" style={{ maxWidth: 580 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0a0a0a" }}>
               Nueva copia de seguridad
             </h3>
             <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "#94a3b8" }}>
@@ -248,7 +247,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               </div>
               <div style={{ marginTop: 10 }}>
                 <span className="text-muted" style={{ fontSize: "0.78rem" }}>Archivo resultante</span>
-                <div className="mono" style={{ color: "#f8fafc", fontWeight: 600, wordBreak: "break-all", fontSize: "0.8rem", marginTop: 3 }}>
+                <div className="mono" style={{ color: "#0a0a0a", fontWeight: 600, wordBreak: "break-all", fontSize: "0.8rem", marginTop: 3 }}>
                   {previewFileName}
                 </div>
               </div>

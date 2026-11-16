@@ -8,9 +8,13 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
   if (isLoading) {
     return (
-      <div className="auth-loading-screen">
-        <div className="auth-spinner"></div>
-        <p className="mono text-muted">Autenticando sesión en InfodesCluster...</p>
+      <div className="app-loading">
+        <div className="app-loading-inner">
+          <img src="/logo_simple.png" alt="" className="app-loading-mark" />
+          <span className="app-loading-name">BuhoControl</span>
+          <div className="app-loading-track" role="progressbar" aria-label="Verificando sesión" />
+          <span className="app-loading-text">Verificando sesión…</span>
+        </div>
       </div>
     );
   }

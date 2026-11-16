@@ -4,6 +4,7 @@ import { signalRService } from "../services/signalr";
 import type { ScheduledTask } from "../types";
 import { ScheduledTaskModal } from "./ScheduledTaskModal";
 import { ScheduledTaskHistoryModal } from "./ScheduledTaskHistoryModal";
+import { TableSkeleton } from "./Loading";
 
 interface ScheduledTasksListProps {
   machineId?: string;
@@ -250,10 +251,7 @@ export const ScheduledTasksList: React.FC<ScheduledTasksListProps> = ({
       {/* Tabla */}
       <div className="explorer-table-wrapper">
         {loading && tasks.length === 0 ? (
-          <div className="explorer-loading-state">
-            <div className="auth-spinner"></div>
-            <p>Cargando tareas programadas…</p>
-          </div>
+          <TableSkeleton rows={6} cols={6} />
         ) : filteredTasks.length === 0 ? (
           <div className="explorer-empty-state">
             <div
@@ -263,19 +261,19 @@ export const ScheduledTasksList: React.FC<ScheduledTasksListProps> = ({
                 display: "grid",
                 placeItems: "center",
                 borderRadius: "var(--radius-md)",
-                background: "rgba(56, 189, 248, 0.08)",
-                border: "1px solid rgba(56, 189, 248, 0.22)",
+                background: "rgba(59, 130, 246, 0.08)",
+                border: "1px solid rgba(59, 130, 246, 0.22)",
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="9"></circle>
                 <polyline points="12 7 12 12 15.5 14"></polyline>
               </svg>
             </div>
-            <h4 style={{ color: "#f8fafc", margin: "6px 0 2px", fontWeight: 700 }}>
+            <h4 style={{ color: "#0a0a0a", margin: "6px 0 2px", fontWeight: 700 }}>
               {search ? "Ninguna tarea coincide" : "Todavía no hay tareas programadas"}
             </h4>
-            <p style={{ color: "#64748b", margin: 0, fontSize: "0.85rem", maxWidth: 420 }}>
+            <p style={{ color: "#71717a", margin: 0, fontSize: "0.85rem", maxWidth: 420 }}>
               {search
                 ? "Prueba con otro nombre, servidor o comando."
                 : "Programa un comando para ejecutarlo automáticamente cada X horas, ciertos días o en una fecha puntual."}
@@ -313,7 +311,7 @@ export const ScheduledTasksList: React.FC<ScheduledTasksListProps> = ({
                   <tr key={t.taskId} className="explorer-row">
                     {/* Tarea */}
                     <td>
-                      <strong style={{ color: "#ffffff", fontSize: "0.9rem" }}>{t.name}</strong>
+                      <strong style={{ color: "#0a0a0a", fontSize: "0.9rem" }}>{t.name}</strong>
                       {t.description && (
                         <div className="text-muted" style={{ fontSize: "0.75rem", marginTop: 2 }}>
                           {t.description}
@@ -337,8 +335,8 @@ export const ScheduledTasksList: React.FC<ScheduledTasksListProps> = ({
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           fontSize: "0.72rem",
-                          color: "#6ee7b7",
-                          background: "#0a0d14",
+                          color: "#0a0a0a",
+                          background: "#fafafa",
                           padding: "4px 8px",
                           borderRadius: "var(--radius-xs)",
                           border: "1px solid var(--border-subtle)",
@@ -350,14 +348,14 @@ export const ScheduledTasksList: React.FC<ScheduledTasksListProps> = ({
 
                     {/* Frecuencia */}
                     <td>
-                      <span style={{ fontSize: "0.82rem", color: "#e2e8f0", fontWeight: 600 }}>
+                      <span style={{ fontSize: "0.82rem", color: "#3f3f46", fontWeight: 600 }}>
                         {t.scheduleSummary}
                       </span>
                     </td>
 
                     {/* Próxima ejecución */}
                     <td>
-                      <span className="mono" style={{ fontSize: "0.75rem", color: t.isEnabled ? "#7dd3fc" : "#64748b" }}>
+                      <span className="mono" style={{ fontSize: "0.75rem", color: t.isEnabled ? "#1e40af" : "#71717a" }}>
                         {t.isEnabled ? t.nextRunParaguayFormatted : "Pausada"}
                       </span>
                     </td>
@@ -373,7 +371,7 @@ export const ScheduledTasksList: React.FC<ScheduledTasksListProps> = ({
                             className="mono"
                             style={{
                               fontSize: "0.68rem",
-                              color: isLastSuccess ? "#34d399" : isLastFailed ? "#fb7185" : "#fbbf24",
+                              color: isLastSuccess ? "#15803d" : isLastFailed ? "#b91c1c" : "#b45309",
                             }}
                           >
                             Última: {t.lastStatus === "Completed" ? "éxito" : t.lastStatus === "Failed" ? "fallo" : "en curso"}

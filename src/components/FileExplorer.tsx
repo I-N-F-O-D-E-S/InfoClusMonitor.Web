@@ -4,6 +4,8 @@ import { signalRService } from "../services/signalr";
 import type { DirectoryContent, FileItem } from "../types";
 import { BackupModal } from "./BackupModal";
 import { TransferModal } from "./TransferModal";
+import { TableSkeleton } from "./Loading";
+import { formatPyDateTime } from "../utils/datetime";
 
 interface FileExplorerProps {
   machineId: string;
@@ -33,7 +35,7 @@ function FileTypeIcon({ item }: { item: FileItem }) {
 
   if (item.isDirectory) {
     return (
-      <svg {...ICON_PROPS} stroke="#7dd3fc">
+      <svg {...ICON_PROPS} stroke="#1e40af">
         <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
       </svg>
     );
@@ -304,7 +306,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       <div className="explorer-header">
         <div className="explorer-title-group">
           <div>
-            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#f8fafc" }}>
+            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#0a0a0a" }}>
               Archivos y carpetas
             </h3>
             <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "#94a3b8" }}>
@@ -359,8 +361,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
       {/* Progreso de descarga */}
       {isDownloading && (
-        <div className="alert-box" style={{ borderColor: "rgba(56, 189, 248, 0.3)", background: "rgba(56, 189, 248, 0.1)", color: "#7dd3fc" }}>
-          <span className="spinner-small" style={{ borderColor: "rgba(56, 189, 248, 0.3)", borderTopColor: "#38bdf8" }}></span>
+        <div className="alert-box" style={{ borderColor: "rgba(59, 130, 246, 0.3)", background: "rgba(59, 130, 246, 0.1)", color: "#1e40af" }}>
+          <span className="spinner-small" style={{ borderColor: "rgba(59, 130, 246, 0.3)", borderTopColor: "#1e40af" }}></span>
           <span>{downloadingMsg || "Procesando descarga…"}</span>
         </div>
       )}
@@ -481,8 +483,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {selectedCount > 0 && (
         <div
           style={{
-            background: "rgba(56, 189, 248, 0.08)",
-            border: "1px solid rgba(56, 189, 248, 0.35)",
+            background: "rgba(59, 130, 246, 0.08)",
+            border: "1px solid rgba(59, 130, 246, 0.35)",
             borderRadius: "var(--radius-md)",
             padding: "10px 16px",
             marginBottom: 14,
@@ -493,7 +495,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
             gap: 12,
           }}
         >
-          <span style={{ color: "#ffffff", fontWeight: 600, fontSize: "0.82rem" }}>
+          <span style={{ color: "#0a0a0a", fontWeight: 600, fontSize: "0.82rem" }}>
             {selectedCount} {selectedCount === 1 ? "elemento seleccionado" : "elementos seleccionados"}
           </span>
 
@@ -530,10 +532,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {/* Tabla */}
       <div className="explorer-table-wrapper">
         {loading ? (
-          <div className="explorer-loading-state">
-            <div className="auth-spinner"></div>
-            <p>Consultando el servidor…</p>
-          </div>
+          <TableSkeleton rows={7} cols={5} />
         ) : filteredItems.length === 0 ? (
           <div className="explorer-empty-state">
             <div
@@ -543,11 +542,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                 display: "grid",
                 placeItems: "center",
                 borderRadius: "var(--radius-md)",
-                background: "rgba(56, 189, 248, 0.08)",
-                border: "1px solid rgba(56, 189, 248, 0.22)",
+                background: "rgba(59, 130, 246, 0.08)",
+                border: "1px solid rgba(59, 130, 246, 0.22)",
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
               </svg>
             </div>
@@ -579,7 +578,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                   <tr
                     key={item.path}
                     className={`explorer-row ${item.isDirectory ? "table-row-folder" : "table-row-file"} ${isSelected ? "selected-row" : ""}`}
-                    style={{ background: isSelected ? "rgba(56, 189, 248, 0.08)" : undefined }}
+                    style={{ background: isSelected ? "rgba(59, 130, 246, 0.08)" : undefined }}
                   >
                     <td style={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
                       <input
@@ -606,7 +605,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     </td>
 
                     <td className="cell-date mono">
-                      {item.modifiedAt ? new Date(item.modifiedAt).toLocaleString() : "—"}
+                      {formatPyDateTime(item.modifiedAt)}
                     </td>
 
                     <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>

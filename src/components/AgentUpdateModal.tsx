@@ -99,7 +99,8 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
       const res = await uploadAgentReleaseBundle(agentFile, installFile);
       if (res.installCommand) setInstallCommand(res.installCommand);
       if (res.downloadUrl) setDownloadUrl(res.downloadUrl);
-      setSuccessMsg("Archivos empaquetados y publicados. Enlace y comando actualizados.");
+      if (res.targetVersion) setTargetVersion(res.targetVersion);
+      setSuccessMsg("Paquete publicado. Los agentes detectarán el cambio y se actualizarán solos.");
       setAgentFile(null);
       setInstallFile(null);
     } catch (err: any) {
@@ -137,11 +138,11 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <img src="/logo_simple.png" alt="" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
             <div>
-              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0a0a0a" }}>
                 Agente Linux
               </h3>
               <p style={{ margin: 0, fontSize: "0.78rem", color: "#94a3b8" }}>
-                Versión objetivo <span className="mono" style={{ color: "#7dd3fc" }}>v{targetVersion}</span>
+                Versión objetivo <span className="mono" style={{ color: "#1e40af" }}>v{targetVersion}</span>
               </p>
             </div>
           </div>
@@ -306,7 +307,7 @@ export const AgentUpdateModal: React.FC<AgentUpdateModalProps> = ({
             className="modal-footer"
             style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}
           >
-            <span style={{ fontSize: "0.78rem", color: "#64748b", flex: 1, minWidth: 200 }}>
+            <span style={{ fontSize: "0.78rem", color: "#71717a", flex: 1, minWidth: 200 }}>
               {targetMachine
                 ? "Despacha la actualización directamente a este nodo."
                 : "Despacha la actualización a todos los nodos en línea."}

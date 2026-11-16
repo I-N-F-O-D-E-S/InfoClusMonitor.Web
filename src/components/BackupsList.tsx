@@ -4,6 +4,8 @@ import { signalRService } from "../services/signalr";
 import type { BackupRecord } from "../types";
 import { BackupModal } from "./BackupModal";
 import { RestoreBackupModal } from "./RestoreBackupModal";
+import { TableSkeleton } from "./Loading";
+import { formatPyDateTime } from "../utils/datetime";
 
 interface BackupsListProps {
   machineId?: string;
@@ -102,6 +104,27 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
     signalRService.onBackupDeleted(handleDeleted);
   }, [machineId]);
 
+  // Polling de respaldo mientras haya copias en proceso (independiente de SignalR)
+  const hasActiveBackups = backups.some((b) => {
+    const s = String(b.status).toLowerCase();
+    return s === "pending" || s === "compressing" || s === "uploading" || s === "0" || s === "1" || s === "2";
+  });
+
+  useEffect(() => {
+    if (!hasActiveBackups) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const data = await getBackups(machineId);
+        setBackups(data);
+      } catch {
+        // se reintenta en el próximo ciclo
+      }
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [hasActiveBackups, machineId]);
+
   const handleDelete = async (backupId: string, fileName: string) => {
     if (!window.confirm(`¿Eliminar permanentemente la copia «${fileName}»?`)) {
       return;
@@ -156,10 +179,10 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
     }
     if (s === "compressing" || s === "1" || s === "uploading" || s === "2") {
       return (
-        <span className="badge badge-info" style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8" }}>
+        <span className="badge badge-info" style={{ background: "rgba(59, 130, 246, 0.2)", color: "#1e40af" }}>
           <span
             className="spinner-small"
-            style={{ width: 12, height: 12, borderColor: "rgba(56, 189, 248, 0.3)", borderTopColor: "#38bdf8" }}
+            style={{ width: 12, height: 12, borderColor: "rgba(59, 130, 246, 0.3)", borderTopColor: "#1e40af" }}
           ></span>
           Procesando
         </span>
@@ -237,10 +260,7 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
       {/* Tabla */}
       <div className="explorer-table-wrapper">
         {loading ? (
-          <div className="explorer-loading-state">
-            <div className="auth-spinner"></div>
-            <p>Cargando copias de seguridad…</p>
-          </div>
+          <TableSkeleton rows={6} cols={5} />
         ) : filteredBackups.length === 0 ? (
           <div className="explorer-empty-state">
             <div
@@ -250,20 +270,20 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
                 display: "grid",
                 placeItems: "center",
                 borderRadius: "var(--radius-md)",
-                background: "rgba(56, 189, 248, 0.08)",
-                border: "1px solid rgba(56, 189, 248, 0.22)",
+                background: "rgba(59, 130, 246, 0.08)",
+                border: "1px solid rgba(59, 130, 246, 0.22)",
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <ellipse cx="12" cy="5" rx="8.5" ry="3"></ellipse>
                 <path d="M3.5 5v14c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3V5"></path>
                 <path d="M3.5 12c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3"></path>
               </svg>
             </div>
-            <h4 style={{ color: "#f8fafc", margin: "6px 0 2px", fontWeight: 700 }}>
+            <h4 style={{ color: "#0a0a0a", margin: "6px 0 2px", fontWeight: 700 }}>
               {searchFilter ? "Ninguna copia coincide" : "Todavía no hay copias de seguridad"}
             </h4>
-            <p style={{ color: "#64748b", margin: 0, fontSize: "0.85rem", maxWidth: 420 }}>
+            <p style={{ color: "#71717a", margin: 0, fontSize: "0.85rem", maxWidth: 420 }}>
               {searchFilter
                 ? "Prueba con otro nombre de archivo, servidor o ruta."
                 : "Crea la primera copia para respaldar una ruta de tus servidores."}
@@ -302,12 +322,12 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
                     <td>
                       <div className="cell-name">
                         <span className="file-icon" aria-hidden="true">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2z"></path>
                           </svg>
                         </span>
                         <div>
-                          <span className="file-name-text" style={{ fontWeight: 600, color: "#f8fafc" }}>
+                          <span className="file-name-text" style={{ fontWeight: 600, color: "#0a0a0a" }}>
                             {b.fileName}
                           </span>
                           {b.customName && (
@@ -326,7 +346,7 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
 
                     {/* Ruta */}
                     <td>
-                      <code className="mono" style={{ fontSize: "0.78rem", color: "#7dd3fc" }}>
+                      <code className="mono" style={{ fontSize: "0.78rem", color: "#1e40af" }}>
                         {b.sourcePath}
                       </code>
                     </td>
@@ -338,13 +358,13 @@ export const BackupsList: React.FC<BackupsListProps> = ({ machineId, showHeader 
                     <td>
                       {renderStatusBadge(b.status, b.errorMessage)}
                       {b.errorMessage && (
-                        <div style={{ fontSize: "0.72rem", color: "#fb7185", marginTop: 4 }}>{b.errorMessage}</div>
+                        <div style={{ fontSize: "0.72rem", color: "#b91c1c", marginTop: 4 }}>{b.errorMessage}</div>
                       )}
                     </td>
 
                     {/* Fecha */}
                     <td className="cell-date mono">
-                      {b.createdAt ? new Date(b.createdAt).toLocaleString() : "—"}
+                      {formatPyDateTime(b.createdAt)}
                     </td>
 
                     {/* Acciones */}

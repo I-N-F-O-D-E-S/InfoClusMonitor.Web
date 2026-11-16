@@ -113,7 +113,7 @@ export const Navbar = () => {
               <div className="user-avatar">
                 {user?.username ? user.username.substring(0, 2).toUpperCase() : "AD"}
               </div>
-              <span style={{ fontWeight: 600, color: "#ffffff" }}>{user?.username || "Admin"}</span>
+              <span style={{ fontWeight: 600, color: "#0a0a0a" }}>{user?.username || "Admin"}</span>
               <span className="badge badge-mono" style={{ fontSize: "10px", padding: "1px 6px" }}>
                 {user?.role || "Admin"}
               </span>

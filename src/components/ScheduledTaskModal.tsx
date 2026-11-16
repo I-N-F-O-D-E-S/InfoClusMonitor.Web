@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createScheduledTask, updateScheduledTask, getMachines } from "../services/api";
 import type { ScheduledTask, CreateScheduledTaskDto, UpdateScheduledTaskDto, Machine } from "../types";
+import { paraguayInputValueToUtcIso, utcToParaguayInputValue } from "../utils/datetime";
 
 interface ScheduledTaskModalProps {
   isOpen: boolean;
@@ -194,7 +195,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
         setScheduledTime(taskToEdit.scheduledTime || "03:00");
         setSelectedDays(taskToEdit.daysOfWeek ? taskToEdit.daysOfWeek.split(",") : ["Monday"]);
       } else if (taskToEdit.scheduleType === "Once" && taskToEdit.specificDate) {
-        setSpecificDate(new Date(taskToEdit.specificDate).toISOString().slice(0, 16));
+        setSpecificDate(utcToParaguayInputValue(taskToEdit.specificDate));
       } else if (taskToEdit.scheduleType === "CustomCron") {
         setCronExpression(taskToEdit.cronExpression || "0 3 * * *");
       }
@@ -265,12 +266,13 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
       scheduledTimeVal = scheduledTime || "03:00";
       daysOfWeekVal = selectedDays.join(",");
     } else if (scheduleType === "Once") {
-      if (!specificDate) {
+      const utcIso = paraguayInputValueToUtcIso(specificDate);
+      if (!utcIso) {
         setError("Debes seleccionar la fecha y hora de ejecución.");
         setSaving(false);
         return;
       }
-      specificDateVal = new Date(specificDate).toISOString();
+      specificDateVal = utcIso;
     } else if (scheduleType === "CustomCron") {
       cronVal = cronExpression || "0 3 * * *";
     }
@@ -322,7 +324,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
       <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 760, width: "95%" }}>
         <div className="modal-header">
           <div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0a0a0a" }}>
               {taskToEdit ? "Editar tarea programada" : "Programar ejecución de comando"}
             </h3>
             <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "#94a3b8" }}>
@@ -413,7 +415,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
           <div>
             <label className="form-label" htmlFor="task-command" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
               <span>Comando / script bash</span>
-              <span style={{ fontWeight: 400, color: "#64748b", fontSize: "0.72rem" }}>
+              <span style={{ fontWeight: 400, color: "#71717a", fontSize: "0.72rem" }}>
                 Admite variables, pipes, sqlplus y multilínea
               </span>
             </label>
@@ -422,8 +424,8 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
               className="form-input mono"
               rows={6}
               style={{
-                background: "#0a0d14",
-                color: "#6ee7b7",
+                background: "#fafafa",
+                color: "#0a0a0a",
                 fontSize: "0.78rem",
                 lineHeight: 1.55,
                 borderRadius: "var(--radius-md)",
@@ -466,7 +468,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
 
             {scheduleType === "EveryHours" && (
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.82rem", color: "#e2e8f0" }}>Ejecutar cada</span>
+                <span style={{ fontSize: "0.82rem", color: "#3f3f46" }}>Ejecutar cada</span>
                 <input
                   type="number"
                   min={1}
@@ -496,7 +498,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
             {scheduleType === "EveryDays" && (
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: "0.82rem", color: "#e2e8f0" }}>Cada</span>
+                  <span style={{ fontSize: "0.82rem", color: "#3f3f46" }}>Cada</span>
                   <input
                     type="number"
                     min={1}
@@ -511,7 +513,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: "0.82rem", color: "#e2e8f0" }}>A la hora (PY)</span>
+                  <span style={{ fontSize: "0.82rem", color: "#3f3f46" }}>A la hora (PY)</span>
                   <input
                     type="time"
                     className="form-input mono"
@@ -545,7 +547,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: "0.82rem", color: "#e2e8f0" }}>Hora de ejecución en Paraguay</span>
+                  <span style={{ fontSize: "0.82rem", color: "#3f3f46" }}>Hora de ejecución en Paraguay</span>
                   <input
                     type="time"
                     className="form-input mono"
@@ -560,7 +562,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
 
             {scheduleType === "Once" && (
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.82rem", color: "#e2e8f0" }}>Fecha y hora exacta</span>
+                <span style={{ fontSize: "0.82rem", color: "#3f3f46" }}>Fecha y hora exacta</span>
                 <input
                   type="datetime-local"
                   className="form-input mono"
@@ -575,7 +577,7 @@ export const ScheduledTaskModal: React.FC<ScheduledTaskModalProps> = ({
 
             {scheduleType === "CustomCron" && (
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.82rem", color: "#e2e8f0" }}>Expresión cron</span>
+                <span style={{ fontSize: "0.82rem", color: "#3f3f46" }}>Expresión cron</span>
                 <input
                   type="text"
                   className="form-input mono"

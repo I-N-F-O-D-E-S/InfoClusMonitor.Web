@@ -108,7 +108,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
       <div className="modal-content" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0a0a0a" }}>
               Transferir entre servidores
             </h3>
             <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "#94a3b8" }}>
@@ -136,10 +136,10 @@ export const TransferModal: React.FC<TransferModalProps> = ({
           <div className="modal-section">
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span className="badge badge-info">ORIGEN</span>
-              <strong style={{ color: "#7dd3fc", fontSize: "0.85rem" }}>{sourceHostname || "Servidor actual"}</strong>
+              <strong style={{ color: "#1e40af", fontSize: "0.85rem" }}>{sourceHostname || "Servidor actual"}</strong>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <code className="mono" style={{ fontSize: "0.78rem", color: "#cbd5e1", wordBreak: "break-all" }}>
+              <code className="mono" style={{ fontSize: "0.78rem", color: "#52525b", wordBreak: "break-all" }}>
                 {sourcePath}
               </code>
               <span className="badge badge-mono" style={{ marginLeft: "auto", flexShrink: 0 }}>
@@ -159,13 +159,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
           <div className="modal-section">
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span className="badge badge-purple">DESTINO</span>
-              <span style={{ fontSize: "0.82rem", color: "#e2e8f0", fontWeight: 600 }}>Servidor y ruta</span>
+              <span style={{ fontSize: "0.82rem", color: "#3f3f46", fontWeight: 600 }}>Servidor y ruta</span>
             </div>
 
             {loadingMachines ? (
               <div className="text-muted" style={{ fontSize: "0.82rem" }}>Cargando servidores disponibles…</div>
             ) : machines.length === 0 ? (
-              <div style={{ color: "#fb7185", fontSize: "0.82rem" }}>
+              <div style={{ color: "#b91c1c", fontSize: "0.82rem" }}>
                 No hay otros servidores registrados en el clúster.
               </div>
             ) : (
@@ -224,7 +224,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             className="modal-section"
             style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 14 }}
           >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
             <div style={{ fontSize: "0.76rem", color: "#94a3b8", lineHeight: 1.45 }}>

@@ -77,7 +77,7 @@ export const ScheduledTaskHistoryModal: React.FC<ScheduledTaskHistoryModalProps>
       >
         <div className="modal-header" style={{ flexShrink: 0 }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: "1.02rem", fontWeight: 700, color: "#f8fafc" }}>
+            <h3 style={{ margin: 0, fontSize: "1.02rem", fontWeight: 700, color: "#0a0a0a" }}>
               Historial · {task.name}
             </h3>
             <p style={{ margin: "3px 0 0", fontSize: "0.76rem", color: "#94a3b8" }}>
@@ -139,7 +139,7 @@ export const ScheduledTaskHistoryModal: React.FC<ScheduledTaskHistoryModalProps>
             <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
               {executions.length === 0 && !loading && (
                 <div className="explorer-empty-state" style={{ padding: "40px 16px" }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="9"></circle>
                     <polyline points="12 7 12 12 15.5 14"></polyline>
                   </svg>
@@ -165,8 +165,8 @@ export const ScheduledTaskHistoryModal: React.FC<ScheduledTaskHistoryModalProps>
                       borderRadius: "var(--radius-sm)",
                       marginBottom: 6,
                       cursor: "pointer",
-                      background: isSelected ? "rgba(56, 189, 248, 0.12)" : "rgba(255, 255, 255, 0.025)",
-                      border: isSelected ? "1px solid rgba(56, 189, 248, 0.5)" : "1px solid transparent",
+                      background: isSelected ? "rgba(59, 130, 246, 0.12)" : "rgba(10, 10, 10, 0.02)",
+                      border: isSelected ? "1px solid rgba(59, 130, 246, 0.5)" : "1px solid transparent",
                       transition:
                         "background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out)",
                     }}
@@ -175,13 +175,13 @@ export const ScheduledTaskHistoryModal: React.FC<ScheduledTaskHistoryModalProps>
                       <span className={`badge ${isSuccess ? "badge-online" : isFailed ? "badge-offline" : "badge-warning"}`}>
                         {exec.status === "Completed" ? "Completado" : exec.status === "Failed" ? "Fallido" : "En ejecución"}
                       </span>
-                      <span className="mono" style={{ fontSize: "0.7rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span className="mono" style={{ fontSize: "0.7rem", color: "#71717a", display: "inline-flex", alignItems: "center", gap: 4 }}>
                         <ClockIcon />
                         {exec.durationFormatted}
                       </span>
                     </div>
 
-                    <div className="mono" style={{ fontSize: "0.72rem", color: "#cbd5e1", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    <div className="mono" style={{ fontSize: "0.72rem", color: "#52525b", display: "inline-flex", alignItems: "center", gap: 5 }}>
                       <CalendarIcon />
                       {exec.startedAtParaguayFormatted}
                     </div>
@@ -194,7 +194,7 @@ export const ScheduledTaskHistoryModal: React.FC<ScheduledTaskHistoryModalProps>
           {/* Salida de consola */}
           <div
             style={{
-              background: "#08080c",
+              background: "#fafafa",
               border: "1px solid var(--border-subtle)",
               borderRadius: "var(--radius-md)",
               display: "flex",
@@ -241,7 +241,7 @@ export const ScheduledTaskHistoryModal: React.FC<ScheduledTaskHistoryModalProps>
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.78rem",
                 lineHeight: 1.6,
-                color: selectedExec?.status === "Failed" ? "#fb7185" : "#6ee7b7",
+                color: selectedExec?.status === "Failed" ? "#b91c1c" : "#0a0a0a",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               }}
@@ -249,7 +249,7 @@ export const ScheduledTaskHistoryModal: React.FC<ScheduledTaskHistoryModalProps>
               {selectedExec ? (
                 selectedExec.result || selectedExec.errorMessage || "(Ejecución completada sin salida en consola)"
               ) : (
-                <span style={{ color: "#64748b" }}>Selecciona una ejecución para ver su salida bash.</span>
+                <span style={{ color: "#71717a" }}>Selecciona una ejecución para ver su salida bash.</span>
               )}
             </div>
           </div>

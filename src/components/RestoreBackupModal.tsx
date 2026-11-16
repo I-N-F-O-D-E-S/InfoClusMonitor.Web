@@ -96,7 +96,7 @@ export const RestoreBackupModal: React.FC<RestoreBackupModalProps> = ({
       <div className="modal-content" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0a0a0a" }}>
               Restaurar copia de seguridad
             </h3>
             <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "#94a3b8" }}>
@@ -140,7 +140,7 @@ export const RestoreBackupModal: React.FC<RestoreBackupModalProps> = ({
                 Archivo a restaurar
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div className="mono" style={{ color: "#f8fafc", fontWeight: 600, wordBreak: "break-all", fontSize: "0.82rem" }}>
+                <div className="mono" style={{ color: "#0a0a0a", fontWeight: 600, wordBreak: "break-all", fontSize: "0.82rem" }}>
                   {backup.fileName}
                 </div>
                 <div className="mono" style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
@@ -167,7 +167,7 @@ export const RestoreBackupModal: React.FC<RestoreBackupModalProps> = ({
                 ))}
               </select>
               {isTargetOffline && (
-                <p style={{ margin: "6px 0 0", fontSize: "0.75rem", color: "#fb7185" }}>
+                <p style={{ margin: "6px 0 0", fontSize: "0.75rem", color: "#b91c1c" }}>
                   Este servidor está fuera de línea. La orden se enviará cuando vuelva a conectarse.
                 </p>
               )}

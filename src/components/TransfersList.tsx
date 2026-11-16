@@ -3,6 +3,8 @@ import { getTransfers, cancelTransfer } from "../services/api";
 import { signalRService } from "../services/signalr";
 import type { FileTransfer } from "../types";
 import { TransferStatus } from "../types";
+import { TableSkeleton } from "./Loading";
+import { formatPyDateTime } from "../utils/datetime";
 
 interface TransfersListProps {
   machineId?: string;
@@ -49,7 +51,7 @@ const XIcon = () => (
 );
 
 const progressColor = (isCompleted: boolean, isFailed: boolean) =>
-  isCompleted ? "#10b981" : isFailed ? "#f43f5e" : "#38bdf8";
+  isCompleted ? "#15803d" : isFailed ? "#dc2626" : "#1e40af";
 
 export const TransfersList: React.FC<TransfersListProps> = ({
   machineId,
@@ -119,10 +121,10 @@ export const TransfersList: React.FC<TransfersListProps> = ({
       case "downloading":
       case "3":
         return (
-          <span className="badge badge-info" style={{ background: "rgba(56, 189, 248, 0.2)", color: "#38bdf8" }}>
+          <span className="badge badge-info" style={{ background: "rgba(59, 130, 246, 0.2)", color: "#1e40af" }}>
             <span
               className="spinner-small"
-              style={{ width: 12, height: 12, borderColor: "rgba(56, 189, 248, 0.3)", borderTopColor: "#38bdf8" }}
+              style={{ width: 12, height: 12, borderColor: "rgba(59, 130, 246, 0.3)", borderTopColor: "#1e40af" }}
             ></span>
             Extrayendo
           </span>
@@ -216,10 +218,7 @@ export const TransfersList: React.FC<TransfersListProps> = ({
 
       <div className="explorer-table-wrapper">
         {loading ? (
-          <div className="explorer-loading-state">
-            <div className="auth-spinner"></div>
-            <p>Cargando transferencias…</p>
-          </div>
+          <TableSkeleton rows={6} cols={5} />
         ) : filteredTransfers.length === 0 ? (
           <div className="explorer-empty-state">
             <div
@@ -229,20 +228,20 @@ export const TransfersList: React.FC<TransfersListProps> = ({
                 display: "grid",
                 placeItems: "center",
                 borderRadius: "var(--radius-md)",
-                background: "rgba(56, 189, 248, 0.08)",
-                border: "1px solid rgba(56, 189, 248, 0.22)",
+                background: "rgba(59, 130, 246, 0.08)",
+                border: "1px solid rgba(59, 130, 246, 0.22)",
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e40af" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 12h13"></path>
                 <polyline points="11 6 17 12 11 18"></polyline>
                 <path d="M20 4v16"></path>
               </svg>
             </div>
-            <h4 style={{ color: "#f8fafc", margin: "6px 0 2px", fontWeight: 700 }}>
+            <h4 style={{ color: "#0a0a0a", margin: "6px 0 2px", fontWeight: 700 }}>
               {transfers.length === 0 ? "No hay transferencias" : "Ninguna coincide con el filtro"}
             </h4>
-            <p style={{ color: "#64748b", margin: 0, fontSize: "0.82rem", maxWidth: 420 }}>
+            <p style={{ color: "#71717a", margin: 0, fontSize: "0.82rem", maxWidth: 420 }}>
               Inicia una transferencia desde el explorador de archivos de cualquier nodo.
             </p>
           </div>
@@ -272,7 +271,7 @@ export const TransfersList: React.FC<TransfersListProps> = ({
                     <td>
                       {getStatusBadge(t.status)}
                       {isFailed && t.errorMessage && (
-                        <div style={{ fontSize: "0.7rem", color: "#fb7185", marginTop: 4, maxWidth: 200 }}>
+                        <div style={{ fontSize: "0.7rem", color: "#b91c1c", marginTop: 4, maxWidth: 200 }}>
                           {t.errorMessage}
                         </div>
                       )}
@@ -282,15 +281,15 @@ export const TransfersList: React.FC<TransfersListProps> = ({
                     <td>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className="mono" style={{ fontSize: "0.75rem", wordBreak: "break-all" }}>
-                          <span style={{ color: "#7dd3fc" }}>{t.sourceHostname}</span>
+                          <span style={{ color: "#1e40af" }}>{t.sourceHostname}</span>
                           <span className="text-muted"> {t.sourcePath}</span>
                         </div>
                         <div className="mono" style={{ fontSize: "0.75rem", wordBreak: "break-all", display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ color: "#64748b", display: "inline-flex" }}>
+                          <span style={{ color: "#71717a", display: "inline-flex" }}>
                             <ArrowRightIcon />
                           </span>
                           <span>
-                            <span style={{ color: "#c4b5fd" }}>{t.targetHostname}</span>
+                            <span style={{ color: "#1e40af" }}>{t.targetHostname}</span>
                             <span className="text-muted"> {t.targetPath}</span>
                           </span>
                         </div>
@@ -317,7 +316,7 @@ export const TransfersList: React.FC<TransfersListProps> = ({
 
                     {/* Fecha */}
                     <td className="cell-date mono">
-                      {t.createdAt ? new Date(t.createdAt).toLocaleString() : "—"}
+                      {formatPyDateTime(t.createdAt)}
                     </td>
 
                     {/* Acciones */}

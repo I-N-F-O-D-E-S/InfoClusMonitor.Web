@@ -5,6 +5,8 @@ import { signalRService } from "../services/signalr";
 import { FileExplorer } from "./FileExplorer";
 import { BackupsList } from "./BackupsList";
 import { ScheduledTasksList } from "./ScheduledTasksList";
+import { OraclePanel } from "./OraclePanel";
+import { formatPyTime, parseUtcDate } from "../utils/datetime";
 import { AgentUpdateModal } from "./AgentUpdateModal";
 import type { Machine, Command } from "../types";
 import { MachineStatus, CommandStatus } from "../types";
@@ -71,7 +73,8 @@ function isMachineOnline(m: Machine): boolean {
     return true;
   }
   if (m.lastHeartbeat) {
-    const diffMs = Date.now() - new Date(m.lastHeartbeat).getTime();
+    const heartbeat = parseUtcDate(m.lastHeartbeat);
+    const diffMs = heartbeat ? Date.now() - heartbeat.getTime() : NaN;
     if (diffMs >= 0 && diffMs < 60000) {
       return true;
     }
@@ -80,9 +83,9 @@ function isMachineOnline(m: Machine): boolean {
 }
 
 function getMetricColor(percent: number): string {
-  if (percent >= 85) return "#ef4444";
-  if (percent >= 65) return "#f59e0b";
-  return "#38bdf8";
+  if (percent >= 85) return "#dc2626";
+  if (percent >= 65) return "#d97706";
+  return "#1e40af";
 }
 
 const CopyIcon = () => (
@@ -111,7 +114,7 @@ export default function MachineDetail() {
   const [activeCategory, setActiveCategory] = useState<"all" | "general" | "backup" | "docker" | "diag">("all");
 
   // Tabs principales
-  const [activeMainTab, setActiveMainTab] = useState<"terminal" | "files" | "backups" | "scheduled">("terminal");
+  const [activeMainTab, setActiveMainTab] = useState<"terminal" | "files" | "backups" | "scheduled" | "oracle">("terminal");
 
   // Editor multilínea
   const [isExpanded, setIsExpanded] = useState(false);
@@ -174,6 +177,36 @@ export default function MachineDetail() {
       if (id) signalRService.unsubscribeFromMachine(id);
     };
   }, [id]);
+
+  // Fallback por polling: si SignalR falla o demora, igual se refrescan los comandos pendientes.
+  const hasPendingCommands = commands.some((c) => {
+    const s = c.status as unknown;
+    return (
+      s === CommandStatus.Pending ||
+      s === CommandStatus.Sent ||
+      s === CommandStatus.Running ||
+      s === 0 ||
+      s === 1 ||
+      s === 2
+    );
+  });
+
+  const pollingMachineId = machine?.externalMachineId || id;
+
+  useEffect(() => {
+    if (!hasPendingCommands || !pollingMachineId) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const cmds = await getCommands(pollingMachineId);
+        setCommands(cmds);
+      } catch {
+        // se reintenta en el próximo ciclo
+      }
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [hasPendingCommands, pollingMachineId]);
 
   const handleRefreshTelemetry = async () => {
     const targetId = machine?.externalMachineId || id;
@@ -254,7 +287,7 @@ export default function MachineDetail() {
   if (!machine) {
     return (
       <div className="state-block">
-        <div className="auth-spinner"></div>
+        <div className="app-loading-track" role="progressbar" aria-label="Cargando servidor" />
         <p className="mono text-muted">Cargando telemetría del servidor…</p>
       </div>
     );
@@ -281,7 +314,7 @@ export default function MachineDetail() {
       <div className="breadcrumb mono">
         <Link to="/">Nodos</Link>
         <span>/</span>
-        <span style={{ color: "#ffffff" }}>{machine.name || machine.hostname}</span>
+        <span style={{ color: "#0a0a0a" }}>{machine.name || machine.hostname}</span>
       </div>
 
       {/* Encabezado */}
@@ -386,7 +419,7 @@ export default function MachineDetail() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
             <div>
-              <h4 style={{ color: "#fb7185", fontSize: "0.95rem" }}>¿Eliminar este servidor del clúster?</h4>
+              <h4 style={{ color: "#b91c1c", fontSize: "0.95rem" }}>¿Eliminar este servidor del clúster?</h4>
               <p className="text-muted" style={{ fontSize: "0.82rem", marginTop: 2 }}>
                 Quitará a <strong>{machine.hostname}</strong> de la consola de control.
               </p>
@@ -404,7 +437,7 @@ export default function MachineDetail() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 18 }}>
           <div>
             <div className="stat-label">Hostname nativo</div>
-            <div className="mono" style={{ fontSize: "0.88rem", color: "#ffffff", marginTop: 5, fontWeight: 600 }}>
+            <div className="mono" style={{ fontSize: "0.88rem", color: "#0a0a0a", marginTop: 5, fontWeight: 600 }}>
               {machine.hostname}
             </div>
           </div>
@@ -441,7 +474,7 @@ export default function MachineDetail() {
 
           <div>
             <div className="stat-label">Tiempo activo</div>
-            <div className="mono" style={{ fontSize: "0.9rem", color: "#ffffff", marginTop: 5, fontWeight: 600 }}>
+            <div className="mono" style={{ fontSize: "0.9rem", color: "#0a0a0a", marginTop: 5, fontWeight: 600 }}>
               {formatUptime(machine.uptime)}
             </div>
           </div>
@@ -467,7 +500,7 @@ export default function MachineDetail() {
         {/* Medidores */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 22 }}>
           {metrics.map((mt) => (
-            <div key={mt.label} style={{ background: "#0c0c12", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
+            <div key={mt.label} style={{ background: "#fafafa", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span className="stat-label">{mt.label}</span>
                 <span className="mono" style={{ fontSize: "1.2rem", fontWeight: 700, color: getMetricColor(mt.value), lineHeight: 1 }}>
@@ -531,6 +564,18 @@ export default function MachineDetail() {
           </svg>
           Tareas
         </button>
+        <button
+          type="button"
+          className={`main-tab-btn ${activeMainTab === "oracle" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("oracle")}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          Oracle
+        </button>
       </div>
 
       {activeMainTab === "files" && (
@@ -550,6 +595,16 @@ export default function MachineDetail() {
       {activeMainTab === "scheduled" && (
         <div className="card">
           <ScheduledTasksList machineId={machine.externalMachineId || id || ""} showHeader={true} />
+        </div>
+      )}
+
+      {activeMainTab === "oracle" && (
+        <div className="card">
+          <OraclePanel
+            machineId={machine.externalMachineId || id || ""}
+            hostname={machine.hostname}
+            isOnline={isOnline}
+          />
         </div>
       )}
 
@@ -727,15 +782,15 @@ export default function MachineDetail() {
                 <div key={cmd.id} className="command-history-item">
                   <div className="command-history-top">
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <span className="mono" style={{ fontWeight: 600, color: "#ffffff", fontSize: "0.82rem" }}>
+                      <span className="mono" style={{ fontWeight: 600, color: "#0a0a0a", fontSize: "0.82rem" }}>
                         $ {cmd.parameters}
                       </span>
                       <span
                         className="badge"
                         style={{
-                          backgroundColor: isCompleted ? "rgba(16, 185, 129, 0.12)" : isFailed ? "rgba(244, 63, 94, 0.12)" : isRunning ? "rgba(245, 158, 11, 0.12)" : "#181822",
-                          color: isCompleted ? "#34d399" : isFailed ? "#fb7185" : isRunning ? "#fbbf24" : "#a1a1aa",
-                          border: `1px solid ${isCompleted ? "rgba(16, 185, 129, 0.25)" : isFailed ? "rgba(244, 63, 94, 0.25)" : isRunning ? "rgba(245, 158, 11, 0.25)" : "#272738"}`,
+                          backgroundColor: isCompleted ? "rgba(34, 197, 94, 0.12)" : isFailed ? "rgba(244, 63, 94, 0.12)" : isRunning ? "rgba(245, 158, 11, 0.12)" : "#f4f4f5",
+                          color: isCompleted ? "#15803d" : isFailed ? "#b91c1c" : isRunning ? "#b45309" : "#52525b",
+                          border: `1px solid ${isCompleted ? "rgba(34, 197, 94, 0.25)" : isFailed ? "rgba(244, 63, 94, 0.25)" : isRunning ? "rgba(245, 158, 11, 0.25)" : "#2a2a2e"}`,
                         }}
                       >
                         {statusLabels[cmd.status] || cmd.status}
@@ -744,7 +799,7 @@ export default function MachineDetail() {
 
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <span className="mono text-muted" style={{ fontSize: "0.72rem" }}>
-                        {new Date(cmd.createdAt).toLocaleTimeString()}
+                        {formatPyTime(cmd.createdAt)}
                       </span>
                       {cmd.result && (
                         <button
